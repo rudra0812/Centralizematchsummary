@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 
 interface AnalystMatchPopupProps {
@@ -10,11 +10,6 @@ interface AnalystMatchPopupProps {
   onSuccess?: () => void;
 }
 
-interface Analyst {
-  name: string;
-  analyst_id: string;
-}
-
 export function AnalystMatchPopup({
   matchId,
   open,
@@ -22,49 +17,23 @@ export function AnalystMatchPopup({
   onSuccess,
 }: AnalystMatchPopupProps) {
   const [loading, setLoading] = useState(false);
-  const [analysts, setAnalysts] = useState<Analyst[]>([
-    { name: "", analyst_id: "" },
-  ]);
   const [formData, setFormData] = useState({
-    live_match: "",
+    analysed_on: new Date().toISOString().split("T")[0],
+    live_match_analysed_by: "",
+    first_half_analysed_by: "",
+    second_half_analysed_by: "",
     remarks: "",
     analysis_tat: "",
     analysis_start_end_time: "",
-    analysis_start_time: new Date().toISOString(),
   });
-
-  const addAnalyst = () => {
-    setAnalysts([...analysts, { name: "", analyst_id: "" }]);
-  };
-
-  const removeAnalyst = (index: number) => {
-    if (analysts.length > 1) {
-      setAnalysts(analysts.filter((_, i) => i !== index));
-    }
-  };
-
-  const updateAnalyst = (index: number, field: keyof Analyst, value: string) => {
-    const updated = [...analysts];
-    updated[index][field] = value;
-    setAnalysts(updated);
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validAnalysts = analysts.filter(
-        (a) => a.name.trim() && a.analyst_id.trim()
-      );
-      if (validAnalysts.length === 0) {
-        toast.error("Please add at least one analyst with both name and ID");
-        setLoading(false);
-        return;
-      }
-
-      if (!formData.live_match) {
-        toast.error("Please select if this is a live match");
+      if (!formData.analysed_on) {
+        toast.error("Please enter the analysis date");
         setLoading(false);
         return;
       }
@@ -73,13 +42,31 @@ export function AnalystMatchPopup({
       const analysisTime = parseFloat(formData.analysis_start_end_time);
 
       if (isNaN(analysisTat) || analysisTat <= 0) {
-        toast.error("Analysis TAT must be a positive number");
+        toast.error("Analysis TAT must be a positive number (in minutes)");
         setLoading(false);
         return;
       }
 
       if (isNaN(analysisTime) || analysisTime <= 0) {
-        toast.error("Analysis Start to End Time must be a positive number");
+        toast.error("Analysis Start to End Time must be a positive number (in minutes)");
+        setLoading(false);
+        return;
+      }
+
+      // Build analysts array from the individual fields
+      const analysts = [];
+      if (formData.live_match_analysed_by.trim()) {
+        analysts.push({ name: formData.live_match_analysed_by.trim(), role: "live_match" });
+      }
+      if (formData.first_half_analysed_by.trim()) {
+        analysts.push({ name: formData.first_half_analysed_by.trim(), role: "first_half" });
+      }
+      if (formData.second_half_analysed_by.trim()) {
+        analysts.push({ name: formData.second_half_analysed_by.trim(), role: "second_half" });
+      }
+
+      if (analysts.length === 0) {
+        toast.error("Please enter at least one analyst name");
         setLoading(false);
         return;
       }
@@ -93,8 +80,14 @@ export function AnalystMatchPopup({
             Authorization: `Bearer ${publicAnonKey}`,
           },
           body: JSON.stringify({
-            ...formData,
-            analysts: validAnalysts,
+            analysed_on: formData.analysed_on,
+            live_match_analysed_by: formData.live_match_analysed_by,
+            first_half_analysed_by: formData.first_half_analysed_by,
+            second_half_analysed_by: formData.second_half_analysed_by,
+            remarks: formData.remarks,
+            analysis_tat: formData.analysis_tat,
+            analysis_start_end_time: formData.analysis_start_end_time,
+            analysts,
           }),
         }
       );
@@ -102,15 +95,16 @@ export function AnalystMatchPopup({
       const data = await response.json();
 
       if (data.success) {
-        toast.success("Match marked for review successfully!");
+        toast.success("Analysis submitted successfully!");
         onOpenChange(false);
-        setAnalysts([{ name: "", analyst_id: "" }]);
         setFormData({
-          live_match: "",
+          analysed_on: new Date().toISOString().split("T")[0],
+          live_match_analysed_by: "",
+          first_half_analysed_by: "",
+          second_half_analysed_by: "",
           remarks: "",
           analysis_tat: "",
           analysis_start_end_time: "",
-          analysis_start_time: new Date().toISOString(),
         });
         onSuccess?.();
       } else {
@@ -143,7 +137,7 @@ export function AnalystMatchPopup({
         <div className="flex items-center justify-between px-6 pt-6 pb-2">
           <div>
             <h2 className="text-xl font-semibold text-[#111827]">
-              Mark Match for Review
+              Submit Analysis Details
             </h2>
             <p className="text-sm text-[#6b7280] mt-0.5">
               Match ID: {matchId}
@@ -163,105 +157,89 @@ export function AnalystMatchPopup({
         <form onSubmit={handleSubmit} className="px-6 pb-6">
           <div className="space-y-4">
             <div>
-              <label className={labelClass}>Live Match *</label>
-              <div className="relative">
-                <select
-                  className={selectClass}
-                  value={formData.live_match}
+              <label className={labelClass}>Match Analysed On (Date) *</label>
+              <input
+                className={inputClass}
+                type="date"
+                value={formData.analysed_on}
+                onChange={(e) =>
+                  setFormData({ ...formData, analysed_on: e.target.value })
+                }
+                required
+              />
+            </div>
+
+            {/* Analyst Assignment */}
+            <div className="space-y-3">
+              <div>
+                <label className={labelClass}>Live Match Analysed By</label>
+                <input
+                  className={inputClass}
+                  value={formData.live_match_analysed_by}
                   onChange={(e) =>
-                    setFormData({ ...formData, live_match: e.target.value })
+                    setFormData({ ...formData, live_match_analysed_by: e.target.value })
                   }
-                  required
-                >
-                  <option value="" disabled>
-                    Select
-                  </option>
-                  <option value="Yes">Yes</option>
-                  <option value="No">No</option>
-                </select>
-                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  placeholder="Analyst name (if live match)"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={labelClass}>First Half Analysed By *</label>
+                  <input
+                    className={inputClass}
+                    value={formData.first_half_analysed_by}
+                    onChange={(e) =>
+                      setFormData({ ...formData, first_half_analysed_by: e.target.value })
+                    }
+                    placeholder="Analyst name"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className={labelClass}>Second Half Analysed By *</label>
+                  <input
+                    className={inputClass}
+                    value={formData.second_half_analysed_by}
+                    onChange={(e) =>
+                      setFormData({ ...formData, second_half_analysed_by: e.target.value })
+                    }
+                    placeholder="Analyst name"
+                    required
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Analysts */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-sm font-medium text-[#374151]">
-                  Analysts *
-                </label>
-                <button
-                  type="button"
-                  onClick={addAnalyst}
-                  className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-[#16a34a] border border-[#16a34a] rounded-md hover:bg-[#f0fdf4] transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add Analyst
-                </button>
-              </div>
-              <div className="space-y-3">
-                {analysts.map((analyst, index) => (
-                  <div
-                    key={index}
-                    className="flex gap-2 items-start p-3 rounded-md border border-[#e5e7eb] bg-[#f9fafb]"
-                  >
-                    <div className="flex-1 space-y-2">
-                      <input
-                        className={inputClass}
-                        placeholder="Analyst Name"
-                        value={analyst.name}
-                        onChange={(e) =>
-                          updateAnalyst(index, "name", e.target.value)
-                        }
-                        required
-                      />
-                      <input
-                        className={inputClass}
-                        placeholder="Analyst ID"
-                        value={analyst.analyst_id}
-                        onChange={(e) =>
-                          updateAnalyst(index, "analyst_id", e.target.value)
-                        }
-                        required
-                      />
-                    </div>
-                    {analysts.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeAnalyst(index)}
-                        className="mt-2 text-[#9ca3af] hover:text-[#ef4444] transition-colors"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <div className="h-px bg-[#e5e7eb]" />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>Analysis TAT (hours) *</label>
+                <label className={labelClass}>Analysis TAT (mins) *</label>
                 <input
                   className={inputClass}
                   type="number"
-                  step="0.1"
+                  step="1"
+                  min="1"
                   value={formData.analysis_tat}
                   onChange={(e) =>
                     setFormData({ ...formData, analysis_tat: e.target.value })
                   }
-                  placeholder="e.g., 5.5"
+                  placeholder="e.g., 120"
                   required
                 />
               </div>
 
               <div>
                 <label className={labelClass}>
-                  Analysis Start to End Time (hours) *
+                  Analysis Start to End Time (mins) *
                 </label>
                 <input
                   className={inputClass}
                   type="number"
-                  step="0.1"
+                  step="1"
+                  min="1"
                   value={formData.analysis_start_end_time}
                   onChange={(e) =>
                     setFormData({
@@ -269,24 +247,21 @@ export function AnalystMatchPopup({
                       analysis_start_end_time: e.target.value,
                     })
                   }
-                  placeholder="Total time spent"
+                  placeholder="Total time from start to end"
                   required
                 />
-                <p className="text-xs text-[#9ca3af] mt-1">
-                  Track the total time from start to completion
-                </p>
               </div>
             </div>
 
             <div>
-              <label className={labelClass}>Remarks</label>
+              <label className={labelClass}>Analyst Remarks on the Game or Match Video</label>
               <textarea
                 className="w-full rounded-md border border-[#d1d5db] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] outline-none focus:border-[#16a34a] focus:ring-1 focus:ring-[#16a34a] transition-colors resize-none"
                 value={formData.remarks}
                 onChange={(e) =>
                   setFormData({ ...formData, remarks: e.target.value })
                 }
-                placeholder="Add any comments for the reviewer..."
+                placeholder="Add any comments about the game or match video..."
                 rows={3}
               />
             </div>

@@ -22,7 +22,7 @@ export function ManagerMatchPopup({
     team_a: "",
     team_b: "",
     game_time: "",
-    venue: "",
+    match_country: "",
     tournament_name: "",
     match_video_type: "",
     match_age_group: "",
@@ -52,9 +52,15 @@ export function ManagerMatchPopup({
         return;
       }
 
-      const gameTime = new Date(formData.game_time);
-      if (isNaN(gameTime.getTime())) {
-        toast.error("Please enter a valid game time");
+      if (!formData.match_analysis_type) {
+        toast.error("Please select a match analysis type");
+        setLoading(false);
+        return;
+      }
+
+      const gameTimeNum = parseFloat(formData.game_time);
+      if (isNaN(gameTimeNum) || gameTimeNum <= 0) {
+        toast.error("Please enter a valid game time in minutes");
         setLoading(false);
         return;
       }
@@ -66,7 +72,10 @@ export function ManagerMatchPopup({
             "Content-Type": "application/json",
             Authorization: `Bearer ${publicAnonKey}`,
           },
-          body: JSON.stringify(formData),
+          body: JSON.stringify({
+            ...formData,
+            venue: formData.match_country,
+          }),
         }
       );
 
@@ -82,7 +91,7 @@ export function ManagerMatchPopup({
           team_a: "",
           team_b: "",
           game_time: "",
-          venue: "",
+          match_country: "",
           tournament_name: "",
           match_video_type: "",
           match_age_group: "",
@@ -128,9 +137,15 @@ export function ManagerMatchPopup({
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pb-6">
+          {/* Section: Match Details */}
+          <div className="mb-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5a6f84] mb-3">Match Details</h3>
+            <div className="h-px bg-[#1e2d3d] mb-4" />
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
             <div>
-              <label className={labelClass}>Client Name (Organizer)</label>
+              <label className={labelClass}>Client Name *</label>
               <input
                 className={inputClass}
                 value={formData.organizer_name}
@@ -143,7 +158,7 @@ export function ManagerMatchPopup({
             </div>
 
             <div>
-              <label className={labelClass}>Client Type</label>
+              <label className={labelClass}>Client Type *</label>
               <div className="relative">
                 <select
                   className={selectClass}
@@ -156,71 +171,39 @@ export function ManagerMatchPopup({
                   <option value="" disabled>
                     Select type
                   </option>
-                  <option value="paid">Paid</option>
-                  <option value="unpaid">Unpaid</option>
-                  <option value="demo">Demo</option>
+                  <option value="Demo">Demo</option>
+                  <option value="Unpaid">Unpaid</option>
+                  <option value="Paid">Paid</option>
                 </select>
                 <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5a6f84]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
 
             <div>
-              <label className={labelClass}>Team A</label>
-              <input
-                className={inputClass}
-                value={formData.team_a}
-                onChange={(e) =>
-                  setFormData({ ...formData, team_a: e.target.value })
-                }
-                placeholder="Select Team A"
-                required
-              />
+              <label className={labelClass}>Match Analysis Type *</label>
+              <div className="relative">
+                <select
+                  className={selectClass}
+                  value={formData.match_analysis_type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, match_analysis_type: e.target.value })
+                  }
+                  required
+                >
+                  <option value="" disabled>
+                    Select analysis type
+                  </option>
+                  <option value="Basic">Basic</option>
+                  <option value="B2C">B2C</option>
+                  <option value="Live">Live</option>
+                  <option value="Pro">Pro</option>
+                </select>
+                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5a6f84]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
             </div>
 
             <div>
-              <label className={labelClass}>Team B</label>
-              <input
-                className={inputClass}
-                value={formData.team_b}
-                onChange={(e) =>
-                  setFormData({ ...formData, team_b: e.target.value })
-                }
-                placeholder="Select Team B"
-                required
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className={labelClass}>Tournament Name</label>
-              <input
-                className={inputClass}
-                value={formData.tournament_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, tournament_name: e.target.value })
-                }
-                placeholder="Select Tournament"
-                required
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Match Analysis Type</label>
-              <input
-                className={inputClass}
-                value={formData.match_analysis_type}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    match_analysis_type: e.target.value,
-                  })
-                }
-                placeholder="e.g., Tactical, Performance"
-                required
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Match Age Group</label>
+              <label className={labelClass}>Match Age Group *</label>
               <div className="relative">
                 <select
                   className={selectClass}
@@ -233,33 +216,91 @@ export function ManagerMatchPopup({
                   <option value="" disabled>
                     Select age group
                   </option>
+                  <option value="U12">U12</option>
                   <option value="U13">U13</option>
+                  <option value="U14">U14</option>
                   <option value="U15">U15</option>
+                  <option value="U16">U16</option>
                   <option value="U17">U17</option>
+                  <option value="U18">U18</option>
                   <option value="U19">U19</option>
                   <option value="U21">U21</option>
-                  <option value="Senior">Senior</option>
-                  <option value="Professional">Professional</option>
+                  <option value="Pro">Pro</option>
                 </select>
                 <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5a6f84]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
 
             <div>
-              <label className={labelClass}>Match Country (Venue)</label>
+              <label className={labelClass}>Team A *</label>
               <input
                 className={inputClass}
-                value={formData.venue}
+                value={formData.team_a}
                 onChange={(e) =>
-                  setFormData({ ...formData, venue: e.target.value })
+                  setFormData({ ...formData, team_a: e.target.value })
                 }
-                placeholder="Select venue"
+                placeholder="Enter Team A"
                 required
               />
             </div>
 
             <div>
-              <label className={labelClass}>Match Video Type</label>
+              <label className={labelClass}>Team B *</label>
+              <input
+                className={inputClass}
+                value={formData.team_b}
+                onChange={(e) =>
+                  setFormData({ ...formData, team_b: e.target.value })
+                }
+                placeholder="Enter Team B"
+                required
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Game Time (mins) *</label>
+              <input
+                className={inputClass}
+                type="number"
+                step="1"
+                min="1"
+                value={formData.game_time}
+                onChange={(e) =>
+                  setFormData({ ...formData, game_time: e.target.value })
+                }
+                placeholder="e.g., 90"
+                required
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Match Country *</label>
+              <input
+                className={inputClass}
+                value={formData.match_country}
+                onChange={(e) =>
+                  setFormData({ ...formData, match_country: e.target.value })
+                }
+                placeholder="Enter country"
+                required
+              />
+            </div>
+
+            <div className="sm:col-span-2">
+              <label className={labelClass}>Major Tournament Name *</label>
+              <input
+                className={inputClass}
+                value={formData.tournament_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, tournament_name: e.target.value })
+                }
+                placeholder="Enter tournament name"
+                required
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>Match Video Type *</label>
               <div className="relative">
                 <select
                   className={selectClass}
@@ -272,33 +313,18 @@ export function ManagerMatchPopup({
                   <option value="" disabled>
                     Select video type
                   </option>
-                  <option value="YouTube">YouTube</option>
-                  <option value="Vimeo">Vimeo</option>
-                  <option value="Twitch">Twitch</option>
-                  <option value="ESPN+">{"ESPN+"}</option>
-                  <option value="DAZN">DAZN</option>
+                  <option value="Veo">Veo</option>
+                  <option value="Pixelot">Pixelot</option>
+                  <option value="Hudl">Hudl</option>
+                  <option value="Broadcasting">Broadcasting</option>
                   <option value="Other">Other</option>
-                  <option value="NA">{"N/A"}</option>
                 </select>
                 <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#5a6f84]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
 
             <div>
-              <label className={labelClass}>Game Time</label>
-              <input
-                className={`${inputClass} [color-scheme:dark]`}
-                type="datetime-local"
-                value={formData.game_time}
-                onChange={(e) =>
-                  setFormData({ ...formData, game_time: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <label className={labelClass}>Match Received On</label>
+              <label className={labelClass}>Match Received On *</label>
               <input
                 className={`${inputClass} [color-scheme:dark]`}
                 type="date"
