@@ -315,32 +315,32 @@ export default function App() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="standalone" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-[#111b2e] border border-border rounded-xl p-1 h-auto">
-            <TabsTrigger value="standalone" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <Package className="h-4 w-4" />
-              Standalone Popups
-            </TabsTrigger>
-            <TabsTrigger value="guide" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <BookOpen className="h-4 w-4" />
-              Guide
-            </TabsTrigger>
-            <TabsTrigger value="admin" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <LayoutDashboard className="h-4 w-4" />
-              Admin Portal
-            </TabsTrigger>
-            <TabsTrigger value="manager" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <ClipboardList className="h-4 w-4" />
-              Manager View
-            </TabsTrigger>
-            <TabsTrigger value="analyst" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <UserCheck className="h-4 w-4" />
-              Analyst
-            </TabsTrigger>
-            <TabsTrigger value="reviewer" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <Shield className="h-4 w-4" />
-              Reviewer
-            </TabsTrigger>
-          </TabsList>
+<TabsList className="flex w-full bg-[#111b2e] border border-border rounded-xl p-1.5 h-auto overflow-hidden">
+<TabsTrigger value="standalone" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<Package className="h-4 w-4 shrink-0" />
+<span className="truncate">Standalone Popups</span>
+</TabsTrigger>
+<TabsTrigger value="guide" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<BookOpen className="h-4 w-4 shrink-0" />
+<span className="truncate">Guide</span>
+</TabsTrigger>
+<TabsTrigger value="admin" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<LayoutDashboard className="h-4 w-4 shrink-0" />
+<span className="truncate">Admin Portal</span>
+</TabsTrigger>
+<TabsTrigger value="manager" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<ClipboardList className="h-4 w-4 shrink-0" />
+<span className="truncate">Manager View</span>
+</TabsTrigger>
+<TabsTrigger value="analyst" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<UserCheck className="h-4 w-4 shrink-0" />
+<span className="truncate">Analyst</span>
+</TabsTrigger>
+<TabsTrigger value="reviewer" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<Shield className="h-4 w-4 shrink-0" />
+<span className="truncate">Reviewer</span>
+</TabsTrigger>
+</TabsList>
 
           <TabsContent value="standalone">
             <div className="space-y-8">
