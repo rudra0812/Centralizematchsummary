@@ -36,6 +36,17 @@ function getWeekNumber(date: Date) {
   return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
 }
 
+// Helper to format date as dd/mm/yy
+function formatDateDDMMYY(dateStr: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = String(d.getFullYear()).slice(-2);
+  return `${day}/${month}/${year}`;
+}
+
 // Create a new match (Manager)
 app.post("/make-server-968c49f6/matches", async (c) => {
   try {
@@ -43,7 +54,8 @@ app.post("/make-server-968c49f6/matches", async (c) => {
     
     const matchId = generateMatchId();
     const createdAt = new Date().toISOString();
-    const receivingWeek = getWeekNumber(new Date(body.match_received_on || createdAt));
+    const receivedOn = body.match_received_on || createdAt;
+    const receivingWeek = getWeekNumber(new Date(receivedOn));
     
     const match = {
       match_id: matchId,
@@ -51,20 +63,20 @@ app.post("/make-server-968c49f6/matches", async (c) => {
       created_at: createdAt,
       updated_at: createdAt,
       
-      // Manager details
+      // Manager details (MATCH DETAILS section)
       manager: {
-        organizer_name: body.organizer_name,
-        client_type: body.client_type, // paid/unpaid/demo
-        match_analysis_type: body.match_analysis_type,
-        team_a: body.team_a,
-        team_b: body.team_b,
-        game_time: body.game_time,
-        venue: body.venue,
-        tournament_name: body.tournament_name,
-        match_video_type: body.match_video_type,
-        match_age_group: body.match_age_group,
-        match_received_on: body.match_received_on || createdAt,
-        receiving_week: receivingWeek,
+        organizer_name: body.organizer_name || "",        // Client Name
+        client_type: body.client_type || "",              // Demo / Unpaid / Paid
+        match_analysis_type: body.match_analysis_type || "", // Basic / B2C / Live / Pro
+        team_a: body.team_a || "",
+        team_b: body.team_b || "",
+        game_time: body.game_time || "",                  // in mins
+        match_country: body.venue || body.match_country || "", // Match Country
+        tournament_name: body.tournament_name || "",      // Major Tournament Name
+        match_video_type: body.match_video_type || "",    // Veo / Pixelot / Hudl / Broadcasting / Other
+        match_age_group: body.match_age_group || "",      // U12-U21 / Pro
+        match_received_on: receivedOn,                    // dd/mm/yy
+        receiving_week: receivingWeek,                    // auto-calculated
       },
       
       // Analyst details (to be filled later)
@@ -110,7 +122,10 @@ app.get("/make-server-968c49f6/matches", async (c) => {
     }
     if (analyst) {
       filteredMatches = filteredMatches.filter((m: any) => 
-        m.analyst?.analysts?.some((a: any) => a.name === analyst)
+        m.analyst?.analysts?.some((a: any) => a.name === analyst) ||
+        m.analyst?.live_match_analysed_by === analyst ||
+        m.analyst?.first_half_analysed_by === analyst ||
+        m.analyst?.second_half_analysed_by === analyst
       );
     }
     
@@ -143,7 +158,7 @@ app.get("/make-server-968c49f6/matches/:id", async (c) => {
   }
 });
 
-// Update match with analyst details
+// Update match with analyst details (ANALYSIS DETAILS section)
 app.put("/make-server-968c49f6/matches/:id/analyst", async (c) => {
   try {
     const matchId = c.req.param("id");
@@ -154,26 +169,28 @@ app.put("/make-server-968c49f6/matches/:id/analyst", async (c) => {
       return c.json({ success: false, error: "Match not found" }, 404);
     }
     
-    const analysedOn = new Date().toISOString();
+    const analysedOn = body.analysed_on || new Date().toISOString();
     const analysisWeek = getWeekNumber(new Date(analysedOn));
     
     // Check if this is a rework scenario
     const isRework = match.status === "rework";
     
     match.analyst = {
-      analysed_on: analysedOn,
-      live_match: body.live_match,
-      analysts: body.analysts, // Array of { name, analyst_id }
-      remarks: body.remarks,
-      analysis_tat: body.analysis_tat,
-      analysis_start_end_time: body.analysis_start_end_time,
-      analysis_week: analysisWeek,
-      analysis_start_time: body.analysis_start_time,
-      rework_count: isRework ? (match.analyst?.rework_count || 0) + 1 : 0,
+      analysed_on: analysedOn,                                     // Match Analysed on (Date - dd/mm/yy)
+      live_match_analysed_by: body.live_match_analysed_by || "",   // Live match analysed by
+      first_half_analysed_by: body.first_half_analysed_by || "",   // First half analysed by
+      second_half_analysed_by: body.second_half_analysed_by || "", // Second half analysed by
+      remarks: body.remarks || "",                                 // Analyst Remarks on the game or match video
+      analysis_tat: body.analysis_tat || 0,                        // Analysis TAT (mins)
+      analysis_start_end_time: body.analysis_start_end_time || 0,  // Analysis Start to End Time (mins)
+      analysis_week: analysisWeek,                                 // Match Analysis Week (auto)
+      // Keep backward compat
+      analysts: body.analysts || [],
+      rework_count: isRework ? (match.analyst?.rework_count || 0) + 1 : (match.analyst?.rework_count || 0),
     };
     
     match.status = "in_review";
-    match.updated_at = analysedOn;
+    match.updated_at = new Date().toISOString();
     
     await kv.set(`match:${matchId}`, match);
     
@@ -185,7 +202,7 @@ app.put("/make-server-968c49f6/matches/:id/analyst", async (c) => {
   }
 });
 
-// Update match with reviewer details
+// Update match with reviewer details (REVIEW DETAILS section)
 app.put("/make-server-968c49f6/matches/:id/reviewer", async (c) => {
   try {
     const matchId = c.req.param("id");
@@ -196,31 +213,38 @@ app.put("/make-server-968c49f6/matches/:id/reviewer", async (c) => {
       return c.json({ success: false, error: "Match not found" }, 404);
     }
     
-    const reviewedOn = new Date().toISOString();
+    const reviewedOn = body.reviewed_on || new Date().toISOString();
     const reviewWeek = getWeekNumber(new Date(reviewedOn));
     
+    // Calculate Total Start to Completion TAT (hours)
+    // Uses match received time -> review completed time
+    let totalTatHours = 0;
+    if (match.manager?.match_received_on) {
+      const receivedTime = new Date(match.manager.match_received_on).getTime();
+      const completedTime = new Date(reviewedOn).getTime();
+      totalTatHours = Math.round(((completedTime - receivedTime) / (1000 * 60 * 60)) * 100) / 100;
+      if (totalTatHours < 0) totalTatHours = 0;
+    }
+    
     match.reviewer = {
-      reviewed_by: body.reviewed_by,
-      qc_error_count: body.qc_error_count,
-      review_tat: body.review_tat,
-      review_week: reviewWeek,
-      reviewed_on: reviewedOn,
-      reviewer_remarks: body.reviewer_remarks,
+      reviewed_by: body.reviewed_by || "",                // Match Reviewed by
+      reviewed_on: reviewedOn,                            // Match Reviewed on (Date - dd/mm/yy)
+      qc_error_count: body.qc_error_count || 0,          // Match QC Error Count
+      review_tat: body.review_tat || 0,                   // Match Review TAT (mins)
+      match_status: body.match_status || "",              // Match Status (Not Assigned / Assigned / Analysed / Completed / NA)
+      reviewer_remarks: body.reviewer_remarks || "",
+      review_week: reviewWeek,                            // Match Review Week (auto)
+      total_start_to_completion_tat: totalTatHours,       // Total Start to Completion TAT (hours)
     };
     
-    // Calculate total TAT
-    const analysisTAT = match.analyst?.analysis_tat || 0;
-    const reviewTAT = body.review_tat || 0;
-    match.reviewer.total_tat = analysisTAT + reviewTAT;
-    
-    // Update status based on reviewer action
+    // Update internal status based on reviewer action
     if (body.has_errors && body.send_back_to_analyst) {
       match.status = "rework";
     } else {
       match.status = "completed";
     }
     
-    match.updated_at = reviewedOn;
+    match.updated_at = new Date().toISOString();
     
     await kv.set(`match:${matchId}`, match);
     
@@ -232,7 +256,7 @@ app.put("/make-server-968c49f6/matches/:id/reviewer", async (c) => {
   }
 });
 
-// Export matches data
+// Export matches data as CSV matching the exact schema
 app.get("/make-server-968c49f6/matches/export/csv", async (c) => {
   try {
     const matchList = await kv.get("match:list") || [];
@@ -240,44 +264,78 @@ app.get("/make-server-968c49f6/matches/export/csv", async (c) => {
     
     const validMatches = matches.filter((m: any) => m !== null);
     
-    // Generate CSV
+    // CSV headers matching exact schema columns
     const headers = [
-      "Match ID", "Status", "Organizer Name", "Client Type", "Match Analysis Type",
-      "Team A", "Team B", "Game Time", "Venue", "Tournament Name", "Video Type",
-      "Age Group", "Received On", "Receiving Week", "Analysed On", "Live Match",
-      "Analysts", "Analysis TAT", "Analysis Week", "Reviewed By", "QC Error Count",
-      "Review TAT", "Review Week", "Total TAT", "Created At", "Remarks"
+      // MATCH DETAILS
+      "Client Name",
+      "Client Type (Demo/ Unpaid/ Paid)",
+      "Match Analysis Type (Basic/ B2C/ Live/ Pro)",
+      "Match ID",
+      "Team A",
+      "vs",
+      "Team B",
+      "Game time (mins)",
+      "Match Country",
+      "Major Tournament Name",
+      "Match Video type (Veo/ Pixelot/ Hudl/ Broadcasting/ Other)",
+      "Match Age Group (U12/ U13/ U14/ U15/ U16/ U17/ U18/ U19/ U21/ Pro)",
+      "Match Received on (Date - dd/mm/yy)",
+      // ANALYSIS DETAILS
+      "Match Analysed on (Date - dd/mm/yy)",
+      "Live match analysed by",
+      "First half analysed by",
+      "Second half analysed by",
+      "Analyst Remarks on the game or match video",
+      "Analysis TAT (mins)",
+      "Analysis Start to End Time (mins)",
+      // REVIEW DETAILS
+      "Match Reviewed by",
+      "Match Reviewed on (Date - dd/mm/yy)",
+      "Match QC Error Count",
+      "Match Review TAT (mins)",
+      "Match Status (Not Assigned/ Assigned/ Analysed/ Completed/ NA)",
+      // CALCULATED
+      "Total Start to Completion TAT (hours)",
+      "Match Receiving Week",
+      "Match Analysis Week",
+      "Match Review Week",
     ].join(",");
     
     const rows = validMatches.map((match: any) => {
-      const analysts = match.analyst?.analysts?.map((a: any) => a.name).join("; ") || "";
       return [
-        match.match_id,
-        match.status,
+        // MATCH DETAILS
         match.manager?.organizer_name || "",
         match.manager?.client_type || "",
         match.manager?.match_analysis_type || "",
+        match.match_id || "",
         match.manager?.team_a || "",
+        "vs",
         match.manager?.team_b || "",
         match.manager?.game_time || "",
-        match.manager?.venue || "",
+        match.manager?.match_country || match.manager?.venue || "",
         match.manager?.tournament_name || "",
         match.manager?.match_video_type || "",
         match.manager?.match_age_group || "",
-        match.manager?.match_received_on || "",
-        match.manager?.receiving_week || "",
-        match.analyst?.analysed_on || "",
-        match.analyst?.live_match || "",
-        analysts,
+        formatDateDDMMYY(match.manager?.match_received_on || ""),
+        // ANALYSIS DETAILS
+        formatDateDDMMYY(match.analyst?.analysed_on || ""),
+        match.analyst?.live_match_analysed_by || "",
+        match.analyst?.first_half_analysed_by || "",
+        match.analyst?.second_half_analysed_by || "",
+        match.analyst?.remarks || "",
         match.analyst?.analysis_tat || "",
-        match.analyst?.analysis_week || "",
+        match.analyst?.analysis_start_end_time || "",
+        // REVIEW DETAILS
         match.reviewer?.reviewed_by || "",
-        match.reviewer?.qc_error_count || "",
+        formatDateDDMMYY(match.reviewer?.reviewed_on || ""),
+        match.reviewer?.qc_error_count ?? "",
         match.reviewer?.review_tat || "",
-        match.reviewer?.review_week || "",
-        match.reviewer?.total_tat || "",
-        match.created_at || "",
-        match.analyst?.remarks || ""
+        match.reviewer?.match_status || "",
+        // CALCULATED
+        match.reviewer?.total_start_to_completion_tat || "",
+        match.manager?.receiving_week ? `Week ${match.manager.receiving_week}` : "",
+        match.analyst?.analysis_week ? `Week ${match.analyst.analysis_week}` : "",
+        match.reviewer?.review_week ? `Week ${match.reviewer.review_week}` : "",
       ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
     });
     

@@ -133,7 +133,7 @@ export function ReviewerDashboard() {
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-border text-[#7a8ba6]">
-                          {match.analyst?.analysis_tat} hrs
+                          {match.analyst?.analysis_tat} mins
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-[#7a8ba6]">

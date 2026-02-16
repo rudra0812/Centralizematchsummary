@@ -313,34 +313,34 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-10 py-8">
         <Tabs defaultValue="standalone" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-[#111b2e] border border-border rounded-xl p-1 h-auto">
-            <TabsTrigger value="standalone" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <Package className="h-4 w-4" />
-              Standalone Popups
-            </TabsTrigger>
-            <TabsTrigger value="guide" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <BookOpen className="h-4 w-4" />
-              Guide
-            </TabsTrigger>
-            <TabsTrigger value="admin" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <LayoutDashboard className="h-4 w-4" />
-              Admin Portal
-            </TabsTrigger>
-            <TabsTrigger value="manager" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <ClipboardList className="h-4 w-4" />
-              Manager View
-            </TabsTrigger>
-            <TabsTrigger value="analyst" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <UserCheck className="h-4 w-4" />
-              Analyst
-            </TabsTrigger>
-            <TabsTrigger value="reviewer" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
-              <Shield className="h-4 w-4" />
-              Reviewer
-            </TabsTrigger>
-          </TabsList>
+<TabsList className="flex w-full bg-[#111b2e] border border-border rounded-2xl p-3 h-auto gap-1">
+<TabsTrigger value="standalone" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<Package className="h-4 w-4 shrink-0" />
+<span className="truncate">Standalone Popups</span>
+</TabsTrigger>
+<TabsTrigger value="guide" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<BookOpen className="h-4 w-4 shrink-0" />
+<span className="truncate">Guide</span>
+</TabsTrigger>
+<TabsTrigger value="admin" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<LayoutDashboard className="h-4 w-4 shrink-0" />
+<span className="truncate">Admin Portal</span>
+</TabsTrigger>
+<TabsTrigger value="manager" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<ClipboardList className="h-4 w-4 shrink-0" />
+<span className="truncate">Manager View</span>
+</TabsTrigger>
+<TabsTrigger value="analyst" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<UserCheck className="h-4 w-4 shrink-0" />
+<span className="truncate">Analyst</span>
+</TabsTrigger>
+<TabsTrigger value="reviewer" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
+<Shield className="h-4 w-4 shrink-0" />
+<span className="truncate">Reviewer</span>
+</TabsTrigger>
+</TabsList>
 
           <TabsContent value="standalone">
             <div className="space-y-8">
@@ -351,22 +351,22 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 {/* Manager Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#22c55e]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#22c55e]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20">
+                      <div className="p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20 shrink-0">
                         <FileText className="h-6 w-6 text-[#22c55e]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Manager</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Create Match</CardDescription>
+                        <CardTitle className="text-white text-base">Manager</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Create Match</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Create new matches with client details, teams, venue, tournament info, and more.
                     </p>
                     <Button 
@@ -379,20 +379,20 @@ export default function App() {
                 </Card>
 
                 {/* Analyst Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#3b82f6]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#3b82f6]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#3b82f6]/10 rounded-lg border border-[#3b82f6]/20">
+                      <div className="p-3 bg-[#3b82f6]/10 rounded-lg border border-[#3b82f6]/20 shrink-0">
                         <LineChart className="h-6 w-6 text-[#3b82f6]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Analyst</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Submit Analysis</CardDescription>
+                        <CardTitle className="text-white text-base">Analyst</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Submit Analysis</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Complete analysis with analyst details, TAT tracking, and remarks for reviewers.
                     </p>
                     <Button 
@@ -405,20 +405,20 @@ export default function App() {
                 </Card>
 
                 {/* Reviewer Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#f59e0b]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#f59e0b]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#f59e0b]/10 rounded-lg border border-[#f59e0b]/20">
+                      <div className="p-3 bg-[#f59e0b]/10 rounded-lg border border-[#f59e0b]/20 shrink-0">
                         <CheckCircle className="h-6 w-6 text-[#f59e0b]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Reviewer</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Complete Review</CardDescription>
+                        <CardTitle className="text-white text-base">Reviewer</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Complete Review</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Review analysis with QC checks, error tracking, and option to send back for rework.
                     </p>
                     <Button 
@@ -431,69 +431,170 @@ export default function App() {
                 </Card>
               </div>
 
-              {/* Integration Code Examples */}
+              {/* Production Integration Guide */}
               <Card className="bg-[#111b2e] border-border">
-                <CardHeader>
-                  <CardTitle className="text-white">Integration Examples</CardTitle>
-                  <CardDescription className="text-[#7a8ba6]">
-                    Copy these code snippets to integrate into your existing website
-                  </CardDescription>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20 shrink-0">
+                      <Package className="h-5 w-5 text-[#22c55e]" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-lg">Production Integration</CardTitle>
+                      <CardDescription className="text-[#7a8ba6] text-sm">
+                        Drop these popups into your website. Just set your API base URL and auth token -- everything else works out of the box.
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-6 pt-4">
+                  {/* Step 1 - Config */}
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-[#c0cde0]">1. Import the component:</h3>
-                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
-{`import { ManagerMatchPopup } from "./components/standalone/ManagerMatchPopup";`}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#22c55e]/15 text-[#22c55e] text-xs font-bold shrink-0">1</span>
+                      <h3 className="font-semibold text-sm text-[#c0cde0]">Set your API endpoint</h3>
+                    </div>
+                    <p className="text-xs text-[#5a6f84] ml-8">Replace the URL and token with your production server address. All 3 popups will use these values.</p>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e] ml-8">
+{`// utils/supabase/info.tsx  (or any config file)
+export const projectId = "YOUR_PROJECT_ID";
+export const publicAnonKey = "YOUR_ANON_KEY";
+
+// The popups call these endpoints:
+//   POST  https://<projectId>.supabase.co/functions/v1/make-server-.../matches
+//   PUT   https://<projectId>.supabase.co/functions/v1/make-server-.../matches/:id/analyst
+//   PUT   https://<projectId>.supabase.co/functions/v1/make-server-.../matches/:id/reviewer`}
                     </pre>
                   </div>
 
+                  {/* Step 2 - Copy files */}
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-[#c0cde0]">2. Add state to your component:</h3>
-                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
-{`const [openManager, setOpenManager] = useState(false);`}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#22c55e]/15 text-[#22c55e] text-xs font-bold shrink-0">2</span>
+                      <h3 className="font-semibold text-sm text-[#c0cde0]">Copy the popup files into your project</h3>
+                    </div>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#7a8ba6] ml-8">
+{`your-project/
+  components/
+    standalone/
+      ManagerMatchPopup.tsx    <!-- Create Match popup -->
+      AnalystMatchPopup.tsx    <!-- Submit Analysis popup -->
+      ReviewerMatchPopup.tsx   <!-- Complete Review popup -->
+  utils/
+    supabase/
+      info.tsx                 <!-- Your API config (Step 1) -->`}
                     </pre>
                   </div>
 
+                  {/* Step 3 - Manager */}
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-[#c0cde0]">3. Add a trigger button:</h3>
-                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
-{`<button onClick={() => setOpenManager(true)}>
-  Create New Match
-</button>`}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#22c55e]/15 text-[#22c55e] text-xs font-bold shrink-0">3</span>
+                      <h3 className="font-semibold text-sm text-[#c0cde0]">Use the Manager popup (Create Match)</h3>
+                    </div>
+                    <p className="text-xs text-[#5a6f84] ml-8">No match ID needed -- this creates a brand new match entry.</p>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e] ml-8">
+{`import { useState } from "react";
+import { ManagerMatchPopup } from "./components/standalone/ManagerMatchPopup";
+
+function YourPage() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setOpen(true)}>
+        Create New Match
+      </button>
+
+      <ManagerMatchPopup
+        open={open}
+        onOpenChange={setOpen}
+        onSuccess={() => {
+          // Refresh your match list here
+        }}
+      />
+    </>
+  );
+}`}
                     </pre>
                   </div>
 
+                  {/* Step 4 - Analyst */}
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-[#c0cde0]">4. Add the popup component:</h3>
-                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
-{`<ManagerMatchPopup 
-  open={openManager} 
-  onOpenChange={setOpenManager}
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#3b82f6]/15 text-[#3b82f6] text-xs font-bold shrink-0">4</span>
+                      <h3 className="font-semibold text-sm text-[#c0cde0]">Use the Analyst popup (Submit Analysis)</h3>
+                    </div>
+                    <p className="text-xs text-[#5a6f84] ml-8">Pass the match ID returned from Step 3. Fields: analysed on, live/first-half/second-half analyst names, TAT, remarks.</p>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e] ml-8">
+{`import { AnalystMatchPopup } from "./components/standalone/AnalystMatchPopup";
+
+<AnalystMatchPopup
+  matchId="MATCH-2026-001"   // from the created match
+  open={openAnalyst}
+  onOpenChange={setOpenAnalyst}
   onSuccess={() => {
-    console.log("Match created!");
-    // Refresh your data here
+    // Analysis submitted, refresh data
   }}
 />`}
                     </pre>
                   </div>
 
+                  {/* Step 5 - Reviewer */}
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm text-[#c0cde0]">For Analyst and Reviewer popups (requires matchId):</h3>
-                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
-{`<AnalystMatchPopup 
-  matchId="MATCH-2026-001"
-  open={openAnalyst} 
-  onOpenChange={setOpenAnalyst}
-  onSuccess={() => console.log("Analysis submitted!")}
-/>
+                    <div className="flex items-center gap-2">
+                      <span className="flex items-center justify-center h-6 w-6 rounded-full bg-[#f59e0b]/15 text-[#f59e0b] text-xs font-bold shrink-0">5</span>
+                      <h3 className="font-semibold text-sm text-[#c0cde0]">Use the Reviewer popup (Complete Review)</h3>
+                    </div>
+                    <p className="text-xs text-[#5a6f84] ml-8">Pass the same match ID. Fields: reviewed by, reviewed on, QC error count, review TAT, match status, send-back toggle.</p>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e] ml-8">
+{`import { ReviewerMatchPopup } from "./components/standalone/ReviewerMatchPopup";
 
-<ReviewerMatchPopup 
-  matchId="MATCH-2026-001"
-  open={openReviewer} 
+<ReviewerMatchPopup
+  matchId="MATCH-2026-001"   // same match ID
+  open={openReviewer}
   onOpenChange={setOpenReviewer}
-  onSuccess={() => console.log("Review completed!")}
+  onSuccess={() => {
+    // Review completed, refresh data
+  }}
 />`}
                     </pre>
+                  </div>
+
+                  {/* API Reference */}
+                  <div className="rounded-lg border border-[#2a3f5f] bg-[#0b1120] p-5 space-y-3">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">API Endpoints Reference</h3>
+                    <p className="text-xs text-[#5a6f84]">Each popup hits one endpoint. The payload shape matches your CSV schema exactly.</p>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 text-xs font-mono font-bold text-[#22c55e] bg-[#22c55e]/10 px-2 py-0.5 rounded">POST</span>
+                        <div>
+                          <code className="text-xs text-[#c0cde0] font-mono">/matches</code>
+                          <p className="text-xs text-[#5a6f84] mt-0.5">Creates a match. Body: client_name, client_type, match_analysis_type, team_a, team_b, game_time, match_country, tournament_name, match_video_type, match_age_group, match_received_on</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 text-xs font-mono font-bold text-[#3b82f6] bg-[#3b82f6]/10 px-2 py-0.5 rounded">PUT</span>
+                        <div>
+                          <code className="text-xs text-[#c0cde0] font-mono">{'/matches/:id/analyst'}</code>
+                          <p className="text-xs text-[#5a6f84] mt-0.5">Submits analysis. Body: analysed_on, live_match_analysed_by, first_half_analysed_by, second_half_analysed_by, analysis_tat, analysis_start_end_time, remarks</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="shrink-0 text-xs font-mono font-bold text-[#f59e0b] bg-[#f59e0b]/10 px-2 py-0.5 rounded">PUT</span>
+                        <div>
+                          <code className="text-xs text-[#c0cde0] font-mono">{'/matches/:id/reviewer'}</code>
+                          <p className="text-xs text-[#5a6f84] mt-0.5">Completes review. Body: reviewed_by, reviewed_on, qc_error_count, review_tat, match_status, reviewer_remarks, send_back_to_analyst</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Quick note */}
+                  <div className="rounded-lg border border-[#f59e0b]/30 bg-[#f59e0b]/5 p-4">
+                    <p className="text-xs text-[#c0cde0]">
+                      <span className="font-semibold text-[#f59e0b]">Only change needed:</span>{" "}
+                      Update <code className="font-mono bg-[#0b1120] px-1.5 py-0.5 rounded text-[#22c55e]">utils/supabase/info.tsx</code> with your production <code className="font-mono bg-[#0b1120] px-1.5 py-0.5 rounded text-[#22c55e]">projectId</code> and <code className="font-mono bg-[#0b1120] px-1.5 py-0.5 rounded text-[#22c55e]">publicAnonKey</code>. All 3 popups read from this file automatically. Form fields, validation, and data mapping stay identical.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
