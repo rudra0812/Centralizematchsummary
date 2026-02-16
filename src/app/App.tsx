@@ -351,22 +351,22 @@ export default function App() {
                 </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
                 {/* Manager Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#22c55e]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#22c55e]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20">
+                      <div className="p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20 shrink-0">
                         <FileText className="h-6 w-6 text-[#22c55e]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Manager</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Create Match</CardDescription>
+                        <CardTitle className="text-white text-base">Manager</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Create Match</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Create new matches with client details, teams, venue, tournament info, and more.
                     </p>
                     <Button 
@@ -379,20 +379,20 @@ export default function App() {
                 </Card>
 
                 {/* Analyst Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#3b82f6]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#3b82f6]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#3b82f6]/10 rounded-lg border border-[#3b82f6]/20">
+                      <div className="p-3 bg-[#3b82f6]/10 rounded-lg border border-[#3b82f6]/20 shrink-0">
                         <LineChart className="h-6 w-6 text-[#3b82f6]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Analyst</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Submit Analysis</CardDescription>
+                        <CardTitle className="text-white text-base">Analyst</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Submit Analysis</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Complete analysis with analyst details, TAT tracking, and remarks for reviewers.
                     </p>
                     <Button 
@@ -405,20 +405,20 @@ export default function App() {
                 </Card>
 
                 {/* Reviewer Card */}
-                <Card className="bg-[#111b2e] border-border hover:border-[#f59e0b]/40 transition-colors">
+                <Card className="bg-[#111b2e] border-border hover:border-[#f59e0b]/40 transition-colors flex flex-col">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-[#f59e0b]/10 rounded-lg border border-[#f59e0b]/20">
+                      <div className="p-3 bg-[#f59e0b]/10 rounded-lg border border-[#f59e0b]/20 shrink-0">
                         <CheckCircle className="h-6 w-6 text-[#f59e0b]" />
                       </div>
                       <div>
-                        <CardTitle className="text-white">Reviewer</CardTitle>
-                        <CardDescription className="text-[#7a8ba6]">Complete Review</CardDescription>
+                        <CardTitle className="text-white text-base">Reviewer</CardTitle>
+                        <CardDescription className="text-[#7a8ba6] text-sm">Complete Review</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-sm text-[#7a8ba6]">
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <p className="text-sm text-[#7a8ba6] flex-1">
                       Review analysis with QC checks, error tracking, and option to send back for rework.
                     </p>
                     <Button 
