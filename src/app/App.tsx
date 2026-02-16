@@ -315,7 +315,7 @@ export default function App() {
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="standalone" className="space-y-6">
-<TabsList className="flex w-full bg-[#111b2e] border border-border rounded-xl p-2 h-auto">
+<TabsList className="flex w-full bg-[#111b2e] border border-border rounded-2xl p-3 h-auto gap-1">
 <TabsTrigger value="standalone" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
 <Package className="h-4 w-4 shrink-0" />
 <span className="truncate">Standalone Popups</span>
