@@ -1,12 +1,7 @@
 import { useState } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { toast } from "sonner";
+import { X } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
-import { Switch } from "../ui/switch";
 
 interface ReviewerMatchPopupProps {
   matchId: string;
@@ -36,14 +31,12 @@ export function ReviewerMatchPopup({
     setLoading(true);
 
     try {
-      // Validate reviewed_by is filled
       if (!formData.reviewed_by.trim()) {
         toast.error("Please enter your name");
         setLoading(false);
         return;
       }
 
-      // Validate QC error count
       const errorCount = parseInt(formData.qc_error_count);
       if (isNaN(errorCount) || errorCount < 0) {
         toast.error("QC Error Count must be a non-negative number");
@@ -51,7 +44,6 @@ export function ReviewerMatchPopup({
         return;
       }
 
-      // Validate Review TAT
       const reviewTat = parseFloat(formData.review_tat);
       if (isNaN(reviewTat) || reviewTat <= 0) {
         toast.error("Review TAT must be a positive number");
@@ -59,8 +51,11 @@ export function ReviewerMatchPopup({
         return;
       }
 
-      // If errors found and send back is toggled, require remarks
-      if (hasErrors && formData.send_back_to_analyst && !formData.reviewer_remarks.trim()) {
+      if (
+        hasErrors &&
+        formData.send_back_to_analyst &&
+        !formData.reviewer_remarks.trim()
+      ) {
         toast.error("Please provide remarks when sending back for rework");
         setLoading(false);
         return;
@@ -91,7 +86,6 @@ export function ReviewerMatchPopup({
           toast.success("Match review completed successfully!");
         }
         onOpenChange(false);
-        // Reset form
         setFormData({
           reviewed_by: "",
           qc_error_count: "",
@@ -112,105 +106,163 @@ export function ReviewerMatchPopup({
     }
   };
 
+  if (!open) return null;
+
+  const inputClass =
+    "w-full h-10 rounded-md border border-[#d1d5db] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] outline-none focus:border-[#16a34a] focus:ring-1 focus:ring-[#16a34a] transition-colors";
+  const labelClass = "block text-sm font-medium text-[#374151] mb-1.5";
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Complete Match Review</DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            Match ID: {matchId}
-          </p>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="reviewed_by">Reviewed By (Your Name) *</Label>
-            <Input
-              id="reviewed_by"
-              value={formData.reviewed_by}
-              onChange={(e) =>
-                setFormData({ ...formData, reviewed_by: e.target.value })
-              }
-              placeholder="Reviewer name"
-              required
-            />
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div
+        className="fixed inset-0 bg-black/40"
+        onClick={() => onOpenChange(false)}
+      />
+      <div className="relative z-50 w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-lg bg-white border border-[#e5e7eb] shadow-xl mx-4">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-6 pb-2">
+          <div>
+            <h2 className="text-xl font-semibold text-[#111827]">
+              Complete Match Review
+            </h2>
+            <p className="text-sm text-[#6b7280] mt-0.5">
+              Match ID: {matchId}
+            </p>
           </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-[#9ca3af] hover:text-[#374151] transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="qc_error_count">QC Error Count *</Label>
-            <Input
-              id="qc_error_count"
-              type="number"
-              value={formData.qc_error_count}
-              onChange={(e) =>
-                setFormData({ ...formData, qc_error_count: e.target.value })
-              }
-              placeholder="Number of errors found"
-              required
-            />
-          </div>
+        <div className="h-px bg-[#e5e7eb] mx-6 my-3" />
 
-          <div className="space-y-2">
-            <Label htmlFor="review_tat">Review TAT (hours) *</Label>
-            <Input
-              id="review_tat"
-              type="number"
-              step="0.1"
-              value={formData.review_tat}
-              onChange={(e) =>
-                setFormData({ ...formData, review_tat: e.target.value })
-              }
-              placeholder="e.g., 2.5"
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="reviewer_remarks">Reviewer Remarks</Label>
-            <Textarea
-              id="reviewer_remarks"
-              value={formData.reviewer_remarks}
-              onChange={(e) =>
-                setFormData({ ...formData, reviewer_remarks: e.target.value })
-              }
-              placeholder="Add comments about the review..."
-              rows={3}
-            />
-          </div>
-
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-0.5">
-              <Label>Errors Found - Send Back to Analyst</Label>
-              <p className="text-sm text-muted-foreground">
-                Enable this if the match needs rework
-              </p>
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="px-6 pb-6">
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>Reviewed By (Your Name) *</label>
+              <input
+                className={inputClass}
+                value={formData.reviewed_by}
+                onChange={(e) =>
+                  setFormData({ ...formData, reviewed_by: e.target.value })
+                }
+                placeholder="Reviewer name"
+                required
+              />
             </div>
-            <Switch
-              checked={hasErrors && formData.send_back_to_analyst}
-              onCheckedChange={(checked) => {
-                setHasErrors(checked);
-                setFormData({ ...formData, send_back_to_analyst: checked });
-              }}
-            />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelClass}>QC Error Count *</label>
+                <input
+                  className={inputClass}
+                  type="number"
+                  value={formData.qc_error_count}
+                  onChange={(e) =>
+                    setFormData({ ...formData, qc_error_count: e.target.value })
+                  }
+                  placeholder="Number of errors found"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className={labelClass}>Review TAT (hours) *</label>
+                <input
+                  className={inputClass}
+                  type="number"
+                  step="0.1"
+                  value={formData.review_tat}
+                  onChange={(e) =>
+                    setFormData({ ...formData, review_tat: e.target.value })
+                  }
+                  placeholder="e.g., 2.5"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={labelClass}>Reviewer Remarks</label>
+              <textarea
+                className="w-full rounded-md border border-[#d1d5db] bg-white px-3 py-2 text-sm text-[#1f2937] placeholder-[#9ca3af] outline-none focus:border-[#16a34a] focus:ring-1 focus:ring-[#16a34a] transition-colors resize-none"
+                value={formData.reviewer_remarks}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    reviewer_remarks: e.target.value,
+                  })
+                }
+                placeholder="Add comments about the review..."
+                rows={3}
+              />
+            </div>
+
+            {/* Toggle */}
+            <div className="flex items-center justify-between rounded-lg border border-[#e5e7eb] p-4 bg-[#f9fafb]">
+              <div>
+                <p className="text-sm font-medium text-[#374151]">
+                  Errors Found - Send Back to Analyst
+                </p>
+                <p className="text-xs text-[#9ca3af] mt-0.5">
+                  Enable this if the match needs rework
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={hasErrors && formData.send_back_to_analyst}
+                onClick={() => {
+                  const newVal = !(
+                    hasErrors && formData.send_back_to_analyst
+                  );
+                  setHasErrors(newVal);
+                  setFormData({ ...formData, send_back_to_analyst: newVal });
+                }}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                  hasErrors && formData.send_back_to_analyst
+                    ? "bg-[#16a34a]"
+                    : "bg-[#d1d5db]"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                    hasErrors && formData.send_back_to_analyst
+                      ? "translate-x-5"
+                      : "translate-x-0"
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-4">
-            <Button
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-5 mt-5 border-t border-[#e5e7eb]">
+            <button
               type="button"
-              variant="outline"
               onClick={() => onOpenChange(false)}
+              className="h-10 px-5 rounded-md border border-[#d1d5db] text-sm font-medium text-[#374151] bg-white hover:bg-[#f9fafb] transition-colors"
             >
               Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-10 px-5 rounded-md bg-[#16a34a] text-white text-sm font-medium hover:bg-[#15803d] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
               {loading
                 ? "Submitting..."
                 : hasErrors && formData.send_back_to_analyst
-                ? "Send Back for Rework"
-                : "Complete Review"}
-            </Button>
+                  ? "Send Back for Rework"
+                  : "Complete Review"}
+            </button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
