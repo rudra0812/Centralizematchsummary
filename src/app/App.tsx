@@ -281,23 +281,30 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background text-foreground">
       <Toaster />
       
       {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-6">
+      <header className="border-b border-border bg-[#0d1526]">
+        <div className="container mx-auto px-6 py-5">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">Match Management System</h1>
-              <p className="text-muted-foreground mt-1">
-                Centralized workflow tracking for match analysis
-              </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-lg bg-[#22c55e] flex items-center justify-center">
+                  <svg className="h-5 w-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-white tracking-tight">StepOut Match Manager</h1>
+                  <p className="text-xs text-[#7a8ba6]">
+                    Centralized workflow tracking for match analysis
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={createDemoData} variant="outline" className="gap-2">
+            <div className="flex items-center gap-3">
+              <Button onClick={createDemoData} variant="outline" className="gap-2 border-[#2a3f5f] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent text-sm h-9">
                 <Database className="h-4 w-4" />
-                Create Demo Data
+                Demo Data
               </Button>
               <CreateMatchForm onMatchCreated={handleMatchCreated} />
             </div>
@@ -306,30 +313,30 @@ export default function App() {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto px-6 py-8">
         <Tabs defaultValue="standalone" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="standalone" className="gap-2">
+          <TabsList className="grid w-full grid-cols-6 bg-[#111b2e] border border-border rounded-xl p-1 h-auto">
+            <TabsTrigger value="standalone" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <Package className="h-4 w-4" />
               Standalone Popups
             </TabsTrigger>
-            <TabsTrigger value="guide" className="gap-2">
+            <TabsTrigger value="guide" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <BookOpen className="h-4 w-4" />
               Guide
             </TabsTrigger>
-            <TabsTrigger value="admin" className="gap-2">
+            <TabsTrigger value="admin" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <LayoutDashboard className="h-4 w-4" />
               Admin Portal
             </TabsTrigger>
-            <TabsTrigger value="manager" className="gap-2">
+            <TabsTrigger value="manager" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <ClipboardList className="h-4 w-4" />
               Manager View
             </TabsTrigger>
-            <TabsTrigger value="analyst" className="gap-2">
+            <TabsTrigger value="analyst" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <UserCheck className="h-4 w-4" />
               Analyst
             </TabsTrigger>
-            <TabsTrigger value="reviewer" className="gap-2">
+            <TabsTrigger value="reviewer" className="gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 text-sm font-medium">
               <Shield className="h-4 w-4" />
               Reviewer
             </TabsTrigger>
@@ -338,32 +345,32 @@ export default function App() {
           <TabsContent value="standalone">
             <div className="space-y-8">
               <div>
-                <h1 className="text-4xl font-bold mb-2">Match Management Popups</h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">Match Management Popups</h1>
+                <p className="text-[#7a8ba6] text-sm">
                   Three standalone popups ready to integrate into your existing website
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Manager Card */}
-                <Card>
+                <Card className="bg-[#111b2e] border-border hover:border-[#22c55e]/40 transition-colors">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-blue-100 rounded-lg">
-                        <FileText className="h-6 w-6 text-blue-600" />
+                      <div className="p-3 bg-[#22c55e]/10 rounded-lg border border-[#22c55e]/20">
+                        <FileText className="h-6 w-6 text-[#22c55e]" />
                       </div>
                       <div>
-                        <CardTitle>Manager</CardTitle>
-                        <CardDescription>Create Match</CardDescription>
+                        <CardTitle className="text-white">Manager</CardTitle>
+                        <CardDescription className="text-[#7a8ba6]">Create Match</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[#7a8ba6]">
                       Create new matches with client details, teams, venue, tournament info, and more.
                     </p>
                     <Button 
-                      className="w-full"
+                      className="w-full bg-[#22c55e] hover:bg-[#16a34a] text-white border-0"
                       onClick={() => setOpenManager(true)}
                     >
                       Open Manager Popup
@@ -372,24 +379,24 @@ export default function App() {
                 </Card>
 
                 {/* Analyst Card */}
-                <Card>
+                <Card className="bg-[#111b2e] border-border hover:border-[#3b82f6]/40 transition-colors">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-green-100 rounded-lg">
-                        <LineChart className="h-6 w-6 text-green-600" />
+                      <div className="p-3 bg-[#3b82f6]/10 rounded-lg border border-[#3b82f6]/20">
+                        <LineChart className="h-6 w-6 text-[#3b82f6]" />
                       </div>
                       <div>
-                        <CardTitle>Analyst</CardTitle>
-                        <CardDescription>Submit Analysis</CardDescription>
+                        <CardTitle className="text-white">Analyst</CardTitle>
+                        <CardDescription className="text-[#7a8ba6]">Submit Analysis</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[#7a8ba6]">
                       Complete analysis with analyst details, TAT tracking, and remarks for reviewers.
                     </p>
                     <Button 
-                      className="w-full"
+                      className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white border-0"
                       onClick={() => setOpenAnalyst(true)}
                     >
                       Open Analyst Popup
@@ -398,24 +405,24 @@ export default function App() {
                 </Card>
 
                 {/* Reviewer Card */}
-                <Card>
+                <Card className="bg-[#111b2e] border-border hover:border-[#f59e0b]/40 transition-colors">
                   <CardHeader>
                     <div className="flex items-center gap-3">
-                      <div className="p-3 bg-purple-100 rounded-lg">
-                        <CheckCircle className="h-6 w-6 text-purple-600" />
+                      <div className="p-3 bg-[#f59e0b]/10 rounded-lg border border-[#f59e0b]/20">
+                        <CheckCircle className="h-6 w-6 text-[#f59e0b]" />
                       </div>
                       <div>
-                        <CardTitle>Reviewer</CardTitle>
-                        <CardDescription>Complete Review</CardDescription>
+                        <CardTitle className="text-white">Reviewer</CardTitle>
+                        <CardDescription className="text-[#7a8ba6]">Complete Review</CardDescription>
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-[#7a8ba6]">
                       Review analysis with QC checks, error tracking, and option to send back for rework.
                     </p>
                     <Button 
-                      className="w-full"
+                      className="w-full bg-[#f59e0b] hover:bg-[#d97706] text-white border-0"
                       onClick={() => setOpenReviewer(true)}
                     >
                       Open Reviewer Popup
@@ -425,31 +432,31 @@ export default function App() {
               </div>
 
               {/* Integration Code Examples */}
-              <Card>
+              <Card className="bg-[#111b2e] border-border">
                 <CardHeader>
-                  <CardTitle>Integration Examples</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-white">Integration Examples</CardTitle>
+                  <CardDescription className="text-[#7a8ba6]">
                     Copy these code snippets to integrate into your existing website
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">1. Import the component:</h3>
-                    <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">1. Import the component:</h3>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
 {`import { ManagerMatchPopup } from "./components/standalone/ManagerMatchPopup";`}
                     </pre>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">2. Add state to your component:</h3>
-                    <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">2. Add state to your component:</h3>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
 {`const [openManager, setOpenManager] = useState(false);`}
                     </pre>
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">3. Add a trigger button:</h3>
-                    <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">3. Add a trigger button:</h3>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
 {`<button onClick={() => setOpenManager(true)}>
   Create New Match
 </button>`}
@@ -457,8 +464,8 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">4. Add the popup component:</h3>
-                    <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">4. Add the popup component:</h3>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
 {`<ManagerMatchPopup 
   open={openManager} 
   onOpenChange={setOpenManager}
@@ -471,8 +478,8 @@ export default function App() {
                   </div>
 
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">For Analyst and Reviewer popups (requires matchId):</h3>
-                    <pre className="bg-gray-100 p-4 rounded-lg text-xs overflow-x-auto">
+                    <h3 className="font-semibold text-sm text-[#c0cde0]">For Analyst and Reviewer popups (requires matchId):</h3>
+                    <pre className="bg-[#0b1120] border border-border p-4 rounded-lg text-xs overflow-x-auto text-[#22c55e]">
 {`<AnalystMatchPopup 
   matchId="MATCH-2026-001"
   open={openAnalyst} 
@@ -533,10 +540,10 @@ export default function App() {
 
           <TabsContent value="manager" key={`manager-${refreshKey}`}>
             <div className="space-y-6">
-              <div className="rounded-lg border bg-card p-6">
-                <h2 className="text-2xl font-bold mb-4">Manager Dashboard</h2>
-                <p className="text-muted-foreground mb-6">
-                  Create new matches using the "+ Create a Match" button above.
+              <div className="rounded-lg border border-border bg-[#111b2e] p-6">
+                <h2 className="text-2xl font-bold mb-2 text-white">Manager Dashboard</h2>
+                <p className="text-[#7a8ba6] mb-6 text-sm">
+                  Create new matches using the "Demo Data" button above.
                   All created matches will appear in the Admin Portal.
                 </p>
                 <AdminPortal />
@@ -555,12 +562,17 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t mt-12">
-        <div className="container mx-auto px-4 py-6">
-          <div className="text-center text-sm text-muted-foreground">
-            <p>
-              Centralized Match Management System - All match data is stored and
-              tracked in real-time
+      <footer className="border-t border-border mt-12 bg-[#0d1526]">
+        <div className="container mx-auto px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="h-6 w-6 rounded bg-[#22c55e] flex items-center justify-center">
+                <svg className="h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" /></svg>
+              </div>
+              <span className="text-sm font-medium text-[#c0cde0]">StepOut Match Manager</span>
+            </div>
+            <p className="text-xs text-[#7a8ba6]">
+              All match data is stored and tracked in real-time
             </p>
           </div>
         </div>
