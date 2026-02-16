@@ -71,85 +71,85 @@ export function AnalystDashboard() {
 
   const getStatusBadge = (status: string) => {
     if (status === "rework") {
-      return <Badge variant="destructive">REWORK REQUIRED</Badge>;
+      return <Badge variant="outline" className="bg-[#ef4444]/15 text-[#f87171] border-[#ef4444]/30">REWORK REQUIRED</Badge>;
     }
-    return <Badge variant="secondary">READY FOR ANALYSIS</Badge>;
+    return <Badge variant="outline" className="bg-[#22c55e]/15 text-[#4ade80] border-[#22c55e]/30">READY FOR ANALYSIS</Badge>;
   };
 
   return (
     <div className="space-y-6">
-      <Card>
+      <Card className="bg-[#111b2e] border-border">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Analyst Dashboard</CardTitle>
-          <Button onClick={fetchMatches} variant="outline" size="sm">
+          <CardTitle className="text-white">Analyst Dashboard</CardTitle>
+          <Button onClick={fetchMatches} variant="outline" size="sm" className="border-[#2a3f5f] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card>
+            <Card className="bg-[#0d1526] border-border">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">{matches.length}</div>
-                <p className="text-xs text-muted-foreground">
+                <div className="text-2xl font-bold text-[#22c55e]">{matches.length}</div>
+                <p className="text-xs text-[#7a8ba6]">
                   Available for Analysis
                 </p>
               </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-[#0d1526] border-border">
               <CardContent className="pt-6">
-                <div className="text-2xl font-bold">
+                <div className="text-2xl font-bold text-[#ef4444]">
                   {matches.filter((m) => m.status === "rework").length}
                 </div>
-                <p className="text-xs text-muted-foreground">Rework Required</p>
+                <p className="text-xs text-[#7a8ba6]">Rework Required</p>
               </CardContent>
             </Card>
           </div>
 
-          <div className="border rounded-lg">
+          <div className="border border-border rounded-lg overflow-hidden">
             {loading ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-[#7a8ba6]">
                 Loading matches...
               </div>
             ) : matches.length === 0 ? (
-              <div className="p-8 text-center text-muted-foreground">
+              <div className="p-8 text-center text-[#7a8ba6]">
                 No matches available for analysis
               </div>
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Match ID</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Teams</TableHead>
-                    <TableHead>Tournament</TableHead>
-                    <TableHead>Received</TableHead>
-                    <TableHead>Actions</TableHead>
+                  <TableRow className="border-border bg-[#0d1526] hover:bg-[#0d1526]">
+                    <TableHead className="text-[#7a8ba6]">Match ID</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Status</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Client</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Teams</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Tournament</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Received</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {matches.map((match) => (
-                    <TableRow key={match.match_id}>
-                      <TableCell className="font-mono text-sm">
+                    <TableRow key={match.match_id} className="border-border hover:bg-[#1a2742]/50">
+                      <TableCell className="font-mono text-sm text-[#22c55e]">
                         {match.match_id}
                       </TableCell>
                       <TableCell>{getStatusBadge(match.status)}</TableCell>
-                      <TableCell>{match.manager?.organizer_name}</TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-[#c0cde0]">{match.manager?.organizer_name}</TableCell>
+                      <TableCell className="text-sm text-[#c0cde0]">
                         {match.manager?.team_a} vs {match.manager?.team_b}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm text-[#c0cde0]">
                         {match.manager?.tournament_name}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm text-[#7a8ba6]">
                         {new Date(match.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Button
                           size="sm"
                           onClick={() => handleMarkForReview(match.match_id)}
-                          className="gap-2"
+                          className="gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white border-0"
                         >
                           <CheckCircle className="h-4 w-4" />
                           Mark for Review

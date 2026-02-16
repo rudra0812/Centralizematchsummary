@@ -26,146 +26,146 @@ export function MatchDetailsDialog({
 }: MatchDetailsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-[#0b1120] border-border text-[#e8edf4]">
         <DialogHeader>
-          <DialogTitle>Match Details</DialogTitle>
+          <DialogTitle className="text-white">Match Details</DialogTitle>
           <div className="flex items-center gap-2 pt-2">
-            <Badge variant="outline">{match.match_id}</Badge>
-            <Badge>{match.status.replace("_", " ").toUpperCase()}</Badge>
+            <Badge variant="outline" className="border-[#22c55e]/30 text-[#22c55e]">{match.match_id}</Badge>
+            <Badge className="bg-[#22c55e] text-white border-0">{match.status.replace("_", " ").toUpperCase()}</Badge>
           </div>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Manager Details */}
-          <Card>
+          <Card className="bg-[#111b2e] border-border">
             <CardHeader>
-              <CardTitle className="text-lg">Manager Details</CardTitle>
+              <CardTitle className="text-lg text-white">Manager Details</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Client Name (Organizer)
                 </p>
-                <p className="text-sm">{match.manager?.organizer_name}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.organizer_name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Client Type
                 </p>
-                <Badge variant="outline">{match.manager?.client_type}</Badge>
+                <Badge variant="outline" className="border-border text-[#c0cde0]">{match.manager?.client_type}</Badge>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Match Analysis Type
                 </p>
-                <p className="text-sm">{match.manager?.match_analysis_type}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.match_analysis_type}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Teams
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-[#c0cde0]">
                   {match.manager?.team_a} vs {match.manager?.team_b}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Game Time
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-[#c0cde0]">
                   {match.manager?.game_time
                     ? new Date(match.manager.game_time).toLocaleString()
                     : "-"}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Venue
                 </p>
-                <p className="text-sm">{match.manager?.venue}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.venue}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Tournament Name
                 </p>
-                <p className="text-sm">{match.manager?.tournament_name}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.tournament_name}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Video Type
                 </p>
-                <p className="text-sm">{match.manager?.match_video_type}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.match_video_type}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Age Group
                 </p>
-                <p className="text-sm">{match.manager?.match_age_group}</p>
+                <p className="text-sm text-[#c0cde0]">{match.manager?.match_age_group}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Match Received On
                 </p>
-                <p className="text-sm">
+                <p className="text-sm text-[#c0cde0]">
                   {match.manager?.match_received_on
                     ? new Date(match.manager.match_received_on).toLocaleDateString()
                     : "-"}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-sm font-medium text-[#7a8ba6]">
                   Receiving Week
                 </p>
-                <p className="text-sm">Week {match.manager?.receiving_week}</p>
+                <p className="text-sm text-[#c0cde0]">Week {match.manager?.receiving_week}</p>
               </div>
             </CardContent>
           </Card>
 
           {/* Analyst Details */}
           {match.analyst && (
-            <Card>
+            <Card className="bg-[#111b2e] border-border">
               <CardHeader>
-                <CardTitle className="text-lg">Analyst Details</CardTitle>
+                <CardTitle className="text-lg text-white">Analyst Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Analysed On
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-[#c0cde0]">
                       {new Date(match.analyst.analysed_on).toLocaleString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Live Match
                     </p>
-                    <Badge variant="outline">{match.analyst.live_match}</Badge>
+                    <Badge variant="outline" className="border-border text-[#c0cde0]">{match.analyst.live_match}</Badge>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Analysis TAT
                     </p>
-                    <p className="text-sm">{match.analyst.analysis_tat} hours</p>
+                    <p className="text-sm text-[#c0cde0]">{match.analyst.analysis_tat} hours</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Start to End Time
                     </p>
-                    <p className="text-sm">
+                    <p className="text-sm text-[#c0cde0]">
                       {match.analyst.analysis_start_end_time} hours
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Analysis Week
                     </p>
-                    <p className="text-sm">Week {match.analyst.analysis_week}</p>
+                    <p className="text-sm text-[#c0cde0]">Week {match.analyst.analysis_week}</p>
                   </div>
                   {match.analyst.rework_count > 0 && (
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">
+                      <p className="text-sm font-medium text-[#7a8ba6]">
                         Rework Count
                       </p>
                       <Badge variant="destructive">
@@ -175,17 +175,17 @@ export function MatchDetailsDialog({
                   )}
                 </div>
 
-                <Separator />
+                <Separator className="bg-[#1e2f4a]" />
 
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground mb-2">
+                  <p className="text-sm font-medium text-[#7a8ba6] mb-2">
                     Analysts
                   </p>
                   <div className="space-y-2">
                     {match.analyst.analysts?.map((analyst: any, index: number) => (
                       <div key={index} className="flex items-center gap-2">
-                        <Badge>{analyst.name}</Badge>
-                        <span className="text-sm text-muted-foreground">
+                        <Badge className="bg-[#22c55e] text-white border-0">{analyst.name}</Badge>
+                        <span className="text-sm text-[#7a8ba6]">
                           ID: {analyst.analyst_id}
                         </span>
                       </div>
@@ -195,12 +195,12 @@ export function MatchDetailsDialog({
 
                 {match.analyst.remarks && (
                   <>
-                    <Separator />
+                    <Separator className="bg-[#1e2f4a]" />
                     <div>
-                      <p className="text-sm font-medium text-muted-foreground">
+                      <p className="text-sm font-medium text-[#7a8ba6]">
                         Remarks
                       </p>
-                      <p className="text-sm mt-1">{match.analyst.remarks}</p>
+                      <p className="text-sm mt-1 text-[#c0cde0]">{match.analyst.remarks}</p>
                     </div>
                   </>
                 )}
@@ -210,63 +210,64 @@ export function MatchDetailsDialog({
 
           {/* Reviewer Details */}
           {match.reviewer && (
-            <Card>
+            <Card className="bg-[#111b2e] border-border">
               <CardHeader>
-                <CardTitle className="text-lg">Reviewer Details</CardTitle>
+                <CardTitle className="text-lg text-white">Reviewer Details</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     Reviewed By
                   </p>
-                  <p className="text-sm">{match.reviewer.reviewed_by}</p>
+                  <p className="text-sm text-[#c0cde0]">{match.reviewer.reviewed_by}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     QC Error Count
                   </p>
                   <Badge
                     variant={
                       match.reviewer.qc_error_count > 0 ? "destructive" : "outline"
                     }
+                    className={match.reviewer.qc_error_count > 0 ? "" : "border-border text-[#c0cde0]"}
                   >
                     {match.reviewer.qc_error_count} errors
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     Review TAT
                   </p>
-                  <p className="text-sm">{match.reviewer.review_tat} hours</p>
+                  <p className="text-sm text-[#c0cde0]">{match.reviewer.review_tat} hours</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     Total TAT
                   </p>
-                  <p className="text-sm font-bold">
+                  <p className="text-sm font-bold text-white">
                     {match.reviewer.total_tat} hours
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     Review Week
                   </p>
-                  <p className="text-sm">Week {match.reviewer.review_week}</p>
+                  <p className="text-sm text-[#c0cde0]">Week {match.reviewer.review_week}</p>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">
+                  <p className="text-sm font-medium text-[#7a8ba6]">
                     Reviewed On
                   </p>
-                  <p className="text-sm">
+                  <p className="text-sm text-[#c0cde0]">
                     {new Date(match.reviewer.reviewed_on).toLocaleString()}
                   </p>
                 </div>
                 {match.reviewer.reviewer_remarks && (
                   <div className="col-span-2">
-                    <p className="text-sm font-medium text-muted-foreground">
+                    <p className="text-sm font-medium text-[#7a8ba6]">
                       Reviewer Remarks
                     </p>
-                    <p className="text-sm mt-1">
+                    <p className="text-sm mt-1 text-[#c0cde0]">
                       {match.reviewer.reviewer_remarks}
                     </p>
                   </div>
@@ -276,18 +277,18 @@ export function MatchDetailsDialog({
           )}
 
           {/* Timeline */}
-          <Card>
+          <Card className="bg-[#111b2e] border-border">
             <CardHeader>
-              <CardTitle className="text-lg">Timeline</CardTitle>
+              <CardTitle className="text-lg text-white">Timeline</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Created</span>
-                <span>{new Date(match.created_at).toLocaleString()}</span>
+                <span className="text-[#7a8ba6]">Created</span>
+                <span className="text-[#c0cde0]">{new Date(match.created_at).toLocaleString()}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Last Updated</span>
-                <span>{new Date(match.updated_at).toLocaleString()}</span>
+                <span className="text-[#7a8ba6]">Last Updated</span>
+                <span className="text-[#c0cde0]">{new Date(match.updated_at).toLocaleString()}</span>
               </div>
             </CardContent>
           </Card>

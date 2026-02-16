@@ -104,7 +104,7 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
 
   return (
     <>
-      <Button size="lg" className="gap-2" onClick={() => setOpen(true)}>
+      <Button size="lg" className="gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white border-0" onClick={() => setOpen(true)}>
         <Plus className="h-5 w-5" />
         Create a Match
       </Button>
