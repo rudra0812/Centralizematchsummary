@@ -151,9 +151,9 @@ export function AdminPortal() {
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="search" className="text-[#c0cde0]">Search</Label>
+              <Label htmlFor="search" className="text-[#c0cde0] text-xs">Search</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a8ba6]" />
                 <Input
@@ -163,20 +163,20 @@ export function AdminPortal() {
                   onChange={(e) =>
                     setFilters({ ...filters, search: e.target.value })
                   }
-                  className="pl-9 bg-[#0b1120] border-border text-[#e8edf4] placeholder:text-[#4a5a76]"
+                  className="pl-9 bg-[#0b1120] border-border text-[#e8edf4] placeholder:text-[#4a5a76] h-9 text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="status" className="text-[#c0cde0]">Status Filter</Label>
+              <Label htmlFor="status" className="text-[#c0cde0] text-xs">Status Filter</Label>
               <Select
                 value={filters.status || "all"}
                 onValueChange={(value) =>
                   setFilters({ ...filters, status: value === "all" ? "" : value })
                 }
               >
-                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0]">
+                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0] h-9 text-sm">
                   <SelectValue placeholder="All statuses" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#111b2e] border-border">
@@ -190,37 +190,45 @@ export function AdminPortal() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="client_type" className="text-[#c0cde0]">Client Type Filter</Label>
+              <Label htmlFor="client_type" className="text-[#c0cde0] text-xs">Client Type Filter</Label>
               <Select
                 value={filters.client_type || "all"}
                 onValueChange={(value) =>
                   setFilters({ ...filters, client_type: value === "all" ? "" : value })
                 }
               >
-                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0]">
+                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0] h-9 text-sm">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#111b2e] border-border">
                   <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="unpaid">Unpaid</SelectItem>
-                  <SelectItem value="demo">Demo</SelectItem>
+                  <SelectItem value="Paid">Paid</SelectItem>
+                  <SelectItem value="Unpaid">Unpaid</SelectItem>
+                  <SelectItem value="Demo">Demo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[#c0cde0]">&nbsp;</Label>
+              <Label className="text-[#c0cde0] text-xs invisible">Actions</Label>
               <div className="flex gap-2">
                 <Button
-                  onClick={() => setFilters({ status: "", client_type: "", search: "" })}
+                  onClick={() => { setFilters({ status: "", client_type: "", search: "" }); }}
                   variant="outline"
                   size="icon"
-                  className="border-[#2a3f5f] text-[#7a8ba6] hover:bg-[#1a2742] hover:text-white bg-transparent"
+                  className="border-[#2a3f5f] text-[#7a8ba6] hover:bg-[#1a2742] hover:text-white bg-transparent h-9 w-9 shrink-0"
                 >
                   <RefreshCw className="h-4 w-4" />
                 </Button>
-                <Button onClick={handleExport} className="flex-1 gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white border-0">
+                <Button
+                  onClick={fetchMatches}
+                  variant="outline"
+                  size="icon"
+                  className="border-[#2a3f5f] text-[#7a8ba6] hover:bg-[#1a2742] hover:text-white bg-transparent h-9 w-9 shrink-0"
+                >
+                  <Search className="h-4 w-4" />
+                </Button>
+                <Button onClick={handleExport} className="flex-1 gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white border-0 h-9 text-sm">
                   <Download className="h-4 w-4" />
                   Export CSV
                 </Button>
@@ -228,39 +236,33 @@ export function AdminPortal() {
             </div>
           </div>
 
-          {/* Search Button */}
-          <Button onClick={fetchMatches} className="w-full bg-[#1a2742] hover:bg-[#1e2f4a] text-[#c0cde0] border border-border">
-            <Search className="h-4 w-4 mr-2" />
-            Apply Search Filter
-          </Button>
-
           {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Card className="bg-[#0d1526] border-border">
-              <CardContent className="pt-6">
+              <CardContent className="py-4 px-4">
                 <div className="text-2xl font-bold text-white">{matches.length}</div>
                 <p className="text-xs text-[#7a8ba6]">Total Matches</p>
               </CardContent>
             </Card>
             <Card className="bg-[#0d1526] border-border">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-[#22c55e]">
+              <CardContent className="py-4 px-4">
+                <div className="text-2xl font-bold text-[#60a5fa]">
                   {matches.filter((m) => m.status === "created").length}
                 </div>
                 <p className="text-xs text-[#7a8ba6]">Created</p>
               </CardContent>
             </Card>
             <Card className="bg-[#0d1526] border-border">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-[#3b82f6]">
+              <CardContent className="py-4 px-4">
+                <div className="text-2xl font-bold text-[#fbbf24]">
                   {matches.filter((m) => m.status === "in_review").length}
                 </div>
                 <p className="text-xs text-[#7a8ba6]">In Review</p>
               </CardContent>
             </Card>
             <Card className="bg-[#0d1526] border-border">
-              <CardContent className="pt-6">
-                <div className="text-2xl font-bold text-[#f59e0b]">
+              <CardContent className="py-4 px-4">
+                <div className="text-2xl font-bold text-[#4ade80]">
                   {matches.filter((m) => m.status === "completed").length}
                 </div>
                 <p className="text-xs text-[#7a8ba6]">Completed</p>
@@ -269,7 +271,7 @@ export function AdminPortal() {
           </div>
 
           {/* Table */}
-          <div className="border border-border rounded-lg overflow-hidden">
+          <div className="border border-border rounded-lg overflow-x-auto">
             {loading ? (
               <div className="p-8 text-center text-[#7a8ba6]">
                 Loading matches...
@@ -282,50 +284,63 @@ export function AdminPortal() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border bg-[#0d1526] hover:bg-[#0d1526]">
-                    <TableHead className="text-[#7a8ba6]">Match ID</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Status</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Client</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Type</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Teams</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Analysts</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Reviewer</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Created</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Actions</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Match ID</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Client Name</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Client Type</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Analysis Type</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Teams</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">1st Half By</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">2nd Half By</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Reviewer</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Match Status</TableHead>
+                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {matches.map((match) => (
                     <TableRow key={match.match_id} className="border-border hover:bg-[#1a2742]/50">
-                      <TableCell className="font-mono text-sm text-[#22c55e]">
-                        {match.match_id}
+                      <TableCell className="font-mono text-xs text-[#22c55e] whitespace-nowrap">
+                        {match.match_id.length > 20 ? match.match_id.slice(0, 20) + "..." : match.match_id}
                       </TableCell>
-                      <TableCell>{getStatusBadge(match.status)}</TableCell>
-                      <TableCell className="text-[#c0cde0]">{match.manager?.organizer_name}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="border-border text-[#7a8ba6]">
-                          {match.manager?.client_type}
+                      <TableCell className="whitespace-nowrap">{getStatusBadge(match.status)}</TableCell>
+                      <TableCell className="text-[#c0cde0] text-sm whitespace-nowrap">{match.manager?.organizer_name || "-"}</TableCell>
+                      <TableCell className="whitespace-nowrap">
+                        <Badge variant="outline" className="border-border text-[#7a8ba6] text-xs">
+                          {match.manager?.client_type || "-"}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0]">
+                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
+                        {match.manager?.match_analysis_type || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.manager?.team_a} vs {match.manager?.team_b}
                       </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0]">
-                        {match.analyst?.analysts
-                          ?.map((a: any) => a.name)
-                          .join(", ") || "-"}
+                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
+                        {match.analyst?.first_half_analysed_by || 
+                         match.analyst?.analysts?.map((a: any) => a.name).join(", ") || "-"}
                       </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0]">
+                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
+                        {match.analyst?.second_half_analysed_by || "-"}
+                      </TableCell>
+                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.reviewer?.reviewed_by || "-"}
                       </TableCell>
-                      <TableCell className="text-sm text-[#7a8ba6]">
-                        {new Date(match.created_at).toLocaleDateString()}
+                      <TableCell className="whitespace-nowrap">
+                        {match.reviewer?.match_status ? (
+                          <Badge variant="outline" className="border-border text-[#7a8ba6] text-xs">
+                            {match.reviewer.match_status}
+                          </Badge>
+                        ) : (
+                          <span className="text-sm text-[#5a6f84]">-</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => viewMatchDetails(match)}
-                          className="text-[#7a8ba6] hover:text-white hover:bg-[#1a2742]"
+                          className="text-[#7a8ba6] hover:text-white hover:bg-[#1a2742] h-8 w-8 p-0"
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
