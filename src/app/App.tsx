@@ -21,9 +21,10 @@ import { edgeFnBase } from "../lib/supabase";
 import { publicAnonKey } from "/utils/supabase/info";
 
 export default function App() {
-  const { session, appUser, loading, signOut } = useAuth();
+  const { session, appUser, loading, signOut, refreshAppUser } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [recovering, setRecovering] = useState(false);
 
   // Fetch notifications for the current user
   const fetchNotifications = async () => {
@@ -77,8 +78,45 @@ export default function App() {
     );
   }
 
-  // Logged in but no app user profile found (might still be syncing)
+  // Logged in but no app user profile found -- offer to create the profile row
   if (!appUser) {
+    const handleRecoverAccount = async () => {
+      if (!session?.user) return;
+      setRecovering(true);
+      try {
+        // Check if any approved admin exists
+        const { data: existingAdmins } = await (await import("../lib/supabase")).supabase
+          .from("users")
+          .select("id")
+          .eq("role", "admin")
+          .eq("status", "approved")
+          .limit(1);
+
+        const isFirstAdmin = !existingAdmins || existingAdmins.length === 0;
+
+        const { error } = await (await import("../lib/supabase")).supabase
+          .from("users")
+          .insert({
+            auth_id: session.user.id,
+            email: session.user.email,
+            name: session.user.email?.split("@")[0] || "User",
+            role: isFirstAdmin ? "admin" : "business",
+            status: isFirstAdmin ? "approved" : "pending",
+          });
+
+        if (error && error.code === "23505") {
+          // Duplicate -- row already exists, just refresh
+        } else if (error) {
+          console.error("Recovery error:", error);
+        }
+
+        await refreshAppUser();
+      } catch (e) {
+        console.error("Recovery failed:", e);
+      }
+      setRecovering(false);
+    };
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0e1a]">
         <Toaster />
@@ -86,16 +124,32 @@ export default function App() {
           <ShieldAlert className="h-12 w-12 text-[#f59e0b]" />
           <h2 className="text-xl font-bold text-white">Account Not Found</h2>
           <p className="text-[#7a8ba6] text-sm">
-            Your user profile could not be loaded. This may happen if your
-            registration is still being processed.
+            Your authentication exists but no user profile was found. Click below to
+            create your profile. If you are the first user, you will be made admin automatically.
           </p>
-          <Button
-            onClick={signOut}
-            variant="outline"
-            className="border-[#2a3f5f] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent"
-          >
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-3 mt-2">
+            <Button
+              onClick={handleRecoverAccount}
+              disabled={recovering}
+              className="bg-[#3b82f6] hover:bg-[#2563eb] text-white"
+            >
+              {recovering ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Creating Profile...
+                </>
+              ) : (
+                "Create My Profile"
+              )}
+            </Button>
+            <Button
+              onClick={signOut}
+              variant="outline"
+              className="border-[#2a3f5f] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent"
+            >
+              Sign Out
+            </Button>
+          </div>
         </div>
       </div>
     );

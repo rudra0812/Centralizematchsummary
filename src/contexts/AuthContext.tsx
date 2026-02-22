@@ -6,8 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
-import { supabase, edgeFnBase } from "../lib/supabase";
-import { publicAnonKey } from "/utils/supabase/info";
+import { supabase } from "../lib/supabase";
 
 // App-level user type that includes role & approval status
 export interface AppUser {
@@ -49,21 +48,19 @@ export function useAuth() {
   return ctx;
 }
 
-// Fetch the app user profile from the Edge Function
-async function fetchAppUser(
-  authId: string,
-  token: string
-): Promise<AppUser | null> {
+// Fetch app user profile directly from Supabase (no Edge Function needed)
+async function fetchAppUser(authId: string): Promise<AppUser | null> {
   try {
-    const res = await fetch(`${edgeFnBase}/auth/me?auth_id=${authId}`, {
-      headers: {
-        Authorization: `Bearer ${publicAnonKey}`,
-        "x-user-token": token,
-      },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data || !data.id) return null;
+    console.log("[v0] fetchAppUser called with authId:", authId);
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", authId)
+      .single();
+
+    console.log("[v0] fetchAppUser result:", { data, error });
+    if (error || !data) return null;
+
     return {
       id: data.id,
       authId: data.auth_id,
@@ -89,10 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const appUser = await fetchAppUser(
-          session.user.id,
-          session.access_token
-        );
+        const appUser = await fetchAppUser(session.user.id);
         setState({
           session,
           supabaseUser: session.user,
@@ -108,10 +102,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_, session) => {
       if (session?.user) {
-        const appUser = await fetchAppUser(
-          session.user.id,
-          session.access_token
-        );
+        const appUser = await fetchAppUser(session.user.id);
         setState({
           session,
           supabaseUser: session.user,
@@ -142,24 +133,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return { error: error.message };
     if (!data.user) return { error: "Sign up failed" };
 
-    // 2. Create app-level user record via Edge Function
-    const res = await fetch(`${edgeFnBase}/auth/register`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${publicAnonKey}`,
-      },
-      body: JSON.stringify({
-        auth_id: data.user.id,
-        email,
-        name,
-        role,
-      }),
-    });
+    // 2. Check if any approved admin exists
+    const { data: existingAdmins } = await supabase
+      .from("users")
+      .select("id")
+      .eq("role", "admin")
+      .eq("status", "approved")
+      .limit(1);
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      return { error: err.error || "Registration failed" };
+    const isFirstAdmin = !existingAdmins || existingAdmins.length === 0;
+    const finalRole = isFirstAdmin ? "admin" : role;
+    const finalStatus = isFirstAdmin ? "approved" : "pending";
+
+    // 3. Insert user row directly into users table
+    console.log("[v0] Inserting user:", { auth_id: data.user.id, email, name, role: finalRole, status: finalStatus });
+    const { data: insertData, error: insertError } = await supabase.from("users").insert({
+      auth_id: data.user.id,
+      email,
+      name,
+      role: finalRole,
+      status: finalStatus,
+    }).select().single();
+
+    console.log("[v0] Insert result:", { insertData, insertError });
+    if (insertError) {
+      return { error: insertError.message };
+    }
+
+    // 4. Refresh the app user after insert
+    const appUser = await fetchAppUser(data.user.id);
+    if (appUser) {
+      const { data: sessionData } = await supabase.auth.getSession();
+      setState({
+        session: sessionData.session,
+        supabaseUser: data.user,
+        appUser,
+        loading: false,
+      });
     }
 
     return {};
@@ -186,10 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshAppUser = async () => {
     if (state.session?.user) {
-      const appUser = await fetchAppUser(
-        state.session.user.id,
-        state.session.access_token
-      );
+      const appUser = await fetchAppUser(state.session.user.id);
       setState((s) => ({ ...s, appUser }));
     }
   };

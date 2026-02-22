@@ -52,10 +52,8 @@ export default function LoginPage() {
         setError(result.error);
       } else {
         setSuccess(
-          "Registration submitted! An admin will approve your account shortly. You can try logging in once approved."
+          "Account created successfully! If you are the first user, you have been auto-promoted to admin. Otherwise, an admin will review your account."
         );
-        setMode("login");
-        setPassword("");
       }
     }
     setLoading(false);
