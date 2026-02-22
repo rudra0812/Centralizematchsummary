@@ -1,8 +1,16 @@
 import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
+import { createClient } from "jsr:@supabase/supabase-js@2.49.8";
 import * as kv from "./kv_store.tsx";
 const app = new Hono();
+
+// Supabase client for DB operations (users, business_requests, notifications)
+const db = () =>
+  createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+  );
 
 // Enable logger
 app.use('*', logger(console.log));
@@ -350,6 +358,269 @@ app.get("/make-server-968c49f6/matches/export/csv", async (c) => {
   } catch (error) {
     console.error("Error exporting matches:", error);
     return c.json({ success: false, error: String(error) }, 500);
+  }
+});
+
+// =============================================
+// AUTH & USER MANAGEMENT ENDPOINTS
+// =============================================
+
+// Register a new user (creates row in users table, status = 'pending')
+app.post("/make-server-968c49f6/auth/register", async (c) => {
+  try {
+    const body = await c.req.json();
+    const { auth_id, email, name, role } = body;
+
+    if (!auth_id || !email || !name || !role) {
+      return c.json({ error: "Missing required fields" }, 400);
+    }
+
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("users")
+      .insert({ auth_id, email, name, role, status: "pending" })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Registration error:", error);
+      return c.json({ error: error.message }, 400);
+    }
+
+    return c.json({ success: true, user: data });
+  } catch (error) {
+    console.error("Registration error:", error);
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Get current user profile by auth_id
+app.get("/make-server-968c49f6/auth/me", async (c) => {
+  try {
+    const authId = c.req.query("auth_id");
+    if (!authId) return c.json({ error: "Missing auth_id" }, 400);
+
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", authId)
+      .single();
+
+    if (error || !data) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    return c.json(data);
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// List all users (admin only)
+app.get("/make-server-968c49f6/admin/users", async (c) => {
+  try {
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("users")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, users: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Update user (admin: approve, disable, change role)
+app.put("/make-server-968c49f6/admin/users/:id", async (c) => {
+  try {
+    const userId = c.req.param("id");
+    const body = await c.req.json();
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
+
+    if (body.status) updates.status = body.status;
+    if (body.role) updates.role = body.role;
+    if (body.name) updates.name = body.name;
+
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("users")
+      .update(updates)
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, user: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Get users by role (for manager to see analysts)
+app.get("/make-server-968c49f6/users/by-role/:role", async (c) => {
+  try {
+    const role = c.req.param("role");
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("users")
+      .select("id, name, email, role, status")
+      .eq("role", role)
+      .eq("status", "approved")
+      .order("name");
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, users: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// =============================================
+// BUSINESS REQUEST ENDPOINTS
+// =============================================
+
+function generateRequestId() {
+  return `REQ-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+}
+
+// Create business request
+app.post("/make-server-968c49f6/business-requests", async (c) => {
+  try {
+    const body = await c.req.json();
+    const requestId = generateRequestId();
+
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("business_requests")
+      .insert({
+        request_id: requestId,
+        created_by: body.created_by,
+        prospect_name: body.prospect_name,
+        num_matches: body.num_matches || 1,
+        country: body.country || "",
+        source: body.source || "",
+        poc: body.poc || "",
+        video_links: body.video_links || [],
+        lineup_info: body.lineup_info || "",
+        notes: body.notes || "",
+        status: "pending",
+      })
+      .select()
+      .single();
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, request: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// List business requests (optionally filter by created_by)
+app.get("/make-server-968c49f6/business-requests", async (c) => {
+  try {
+    const createdBy = c.req.query("created_by");
+    const supabase = db();
+    let query = supabase
+      .from("business_requests")
+      .select("*, users!business_requests_created_by_fkey(name, email)")
+      .order("created_at", { ascending: false });
+
+    if (createdBy) {
+      query = query.eq("created_by", createdBy);
+    }
+
+    const { data, error } = await query;
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, requests: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Get single business request
+app.get("/make-server-968c49f6/business-requests/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("business_requests")
+      .select("*, users!business_requests_created_by_fkey(name, email)")
+      .eq("id", id)
+      .single();
+
+    if (error) return c.json({ error: error.message }, 404);
+    return c.json({ success: true, request: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Update business request (edit, but request_id stays immutable)
+app.put("/make-server-968c49f6/business-requests/:id", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const body = await c.req.json();
+
+    // Prevent changing request_id
+    delete body.request_id;
+    delete body.id;
+    body.updated_at = new Date().toISOString();
+
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("business_requests")
+      .update(body)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, request: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// =============================================
+// NOTIFICATION ENDPOINTS
+// =============================================
+
+// Get notifications for a user
+app.get("/make-server-968c49f6/notifications/:userId", async (c) => {
+  try {
+    const userId = c.req.param("userId");
+    const supabase = db();
+    const { data, error } = await supabase
+      .from("notifications")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true, notifications: data });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
+  }
+});
+
+// Mark notification as read
+app.put("/make-server-968c49f6/notifications/:id/read", async (c) => {
+  try {
+    const id = c.req.param("id");
+    const supabase = db();
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", id);
+
+    if (error) return c.json({ error: error.message }, 500);
+    return c.json({ success: true });
+  } catch (error) {
+    return c.json({ error: String(error) }, 500);
   }
 });
 
