@@ -166,8 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     name: string,
     role: AppUser["role"]
   ) => {
+    try {
     // 1. Create Supabase Auth user
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    console.log("[v0] signUp called for:", email);
+    const { data, error } = await Promise.race([
+      supabase.auth.signUp({ email, password }),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error("Sign up timed out. Check your connection and try again.")), 10000)
+      ),
+    ]);
     if (error) return { error: error.message };
     if (!data.user) return { error: "Sign up failed" };
 
@@ -211,15 +218,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     return {};
+    } catch (e: any) {
+      console.error("[v0] signUp error:", e);
+      return { error: e.message || "Sign up failed" };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) return { error: error.message };
-    return {};
+    try {
+      console.log("[v0] signIn called for:", email);
+      const result = await Promise.race([
+        supabase.auth.signInWithPassword({ email, password }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("Sign in timed out. Check your connection and try again.")), 10000)
+        ),
+      ]);
+      console.log("[v0] signIn result:", { error: result.error?.message });
+      if (result.error) return { error: result.error.message };
+      return {};
+    } catch (e: any) {
+      console.error("[v0] signIn error:", e);
+      return { error: e.message || "Sign in failed" };
+    }
   };
 
   const signOut = async () => {
