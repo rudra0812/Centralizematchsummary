@@ -56,13 +56,15 @@ export default function App() {
     }
   };
 
-  // Loading state
+  // Loading state -- will auto-timeout after 5 seconds
   if (loading) {
+    console.log("[v0] App is in loading state");
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#0a0e1a]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-[#22c55e]" />
-          <p className="text-[#7a8ba6] text-sm">Loading...</p>
+          <p className="text-[#7a8ba6] text-sm">Connecting to server...</p>
+          <p className="text-[#475569] text-xs mt-2">This should take a few seconds</p>
         </div>
       </div>
     );

@@ -82,44 +82,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loading: true,
   });
 
-  // On mount: check existing session
+  // On mount: check existing session with timeout protection
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session?.user) {
-        const appUser = await fetchAppUser(session.user.id);
-        setState({
-          session,
-          supabaseUser: session.user,
-          appUser,
-          loading: false,
-        });
-      } else {
-        setState((s) => ({ ...s, loading: false }));
+    let mounted = true;
+
+    const initSession = async () => {
+      try {
+        console.log("[v0] Checking existing session...");
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log("[v0] getSession result:", { session: !!session, error });
+
+        if (!mounted) return;
+
+        if (error) {
+          console.log("[v0] Session error, clearing state:", error.message);
+          // Clear any stale tokens from old project
+          await supabase.auth.signOut().catch(() => {});
+          setState({ session: null, supabaseUser: null, appUser: null, loading: false });
+          return;
+        }
+
+        if (session?.user) {
+          console.log("[v0] Session found for user:", session.user.email);
+          const appUser = await fetchAppUser(session.user.id);
+          if (mounted) {
+            setState({ session, supabaseUser: session.user, appUser, loading: false });
+          }
+        } else {
+          console.log("[v0] No session found, showing login");
+          if (mounted) {
+            setState((s) => ({ ...s, loading: false }));
+          }
+        }
+      } catch (e) {
+        console.error("[v0] Session init failed:", e);
+        if (mounted) {
+          setState({ session: null, supabaseUser: null, appUser: null, loading: false });
+        }
       }
-    });
+    };
+
+    // Timeout: if session check takes > 5s, stop loading and show login
+    const timeout = setTimeout(() => {
+      if (mounted) {
+        console.log("[v0] Session check timed out, showing login");
+        setState((s) => {
+          if (s.loading) {
+            return { session: null, supabaseUser: null, appUser: null, loading: false };
+          }
+          return s;
+        });
+      }
+    }, 5000);
+
+    initSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[v0] Auth state change:", event, session?.user?.email);
       if (session?.user) {
         const appUser = await fetchAppUser(session.user.id);
-        setState({
-          session,
-          supabaseUser: session.user,
-          appUser,
-          loading: false,
-        });
+        if (mounted) {
+          setState({ session, supabaseUser: session.user, appUser, loading: false });
+        }
       } else {
-        setState({
-          session: null,
-          supabaseUser: null,
-          appUser: null,
-          loading: false,
-        });
+        if (mounted) {
+          setState({ session: null, supabaseUser: null, appUser: null, loading: false });
+        }
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (
