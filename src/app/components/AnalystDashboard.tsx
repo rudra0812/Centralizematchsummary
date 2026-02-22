@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../../contexts/AuthContext";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import {
@@ -11,7 +12,7 @@ import {
 } from "./ui/table";
 import { Badge } from "./ui/badge";
 import { toast } from "sonner";
-import { CheckCircle, RefreshCw } from "lucide-react";
+import { CheckCircle, RefreshCw, ExternalLink } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { AnalystWorkflowDialog } from "./AnalystWorkflowDialog";
 
@@ -24,6 +25,7 @@ interface Match {
 }
 
 export function AnalystDashboard() {
+  const { appUser } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null);
@@ -78,9 +80,16 @@ export function AnalystDashboard() {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-[#111b2e] border-border">
+      <div>
+        <h1 className="text-2xl font-bold text-white tracking-tight">Analyst Dashboard</h1>
+        <p className="text-sm text-[#7a8ba6] mt-1">
+          View and analyze matches assigned to you
+        </p>
+      </div>
+
+      <Card className="bg-[#111b2e] border-[#1e293b]">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-white">Analyst Dashboard</CardTitle>
+          <CardTitle className="text-white">Available Matches</CardTitle>
           <Button onClick={fetchMatches} variant="outline" size="sm" className="border-[#2a3f5f] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent">
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
