@@ -366,6 +366,8 @@ app.get("/make-server-968c49f6/matches/export/csv", async (c) => {
 // =============================================
 
 // Register a new user (creates row in users table, status = 'pending')
+// First-admin auto-setup: if no approved admin exists, the first registrant
+// is automatically promoted to admin with status='approved'.
 app.post("/make-server-968c49f6/auth/register", async (c) => {
   try {
     const body = await c.req.json();
@@ -376,9 +378,28 @@ app.post("/make-server-968c49f6/auth/register", async (c) => {
     }
 
     const supabase = db();
+
+    // Check if any approved admin already exists
+    const { data: existingAdmins } = await supabase
+      .from("users")
+      .select("id")
+      .eq("role", "admin")
+      .eq("status", "approved")
+      .limit(1);
+
+    const isFirstAdmin = !existingAdmins || existingAdmins.length === 0;
+    const finalRole = isFirstAdmin ? "admin" : role;
+    const finalStatus = isFirstAdmin ? "approved" : "pending";
+
     const { data, error } = await supabase
       .from("users")
-      .insert({ auth_id, email, name, role, status: "pending" })
+      .insert({
+        auth_id,
+        email,
+        name,
+        role: finalRole,
+        status: finalStatus,
+      })
       .select()
       .single();
 
@@ -387,7 +408,11 @@ app.post("/make-server-968c49f6/auth/register", async (c) => {
       return c.json({ error: error.message }, 400);
     }
 
-    return c.json({ success: true, user: data });
+    return c.json({
+      success: true,
+      user: data,
+      first_admin: isFirstAdmin,
+    });
   } catch (error) {
     console.error("Registration error:", error);
     return c.json({ error: String(error) }, 500);
