@@ -113,7 +113,6 @@ export function ReviewerDashboard() {
                     <TableHead className="text-[#7a8ba6]">Teams</TableHead>
                     <TableHead className="text-[#7a8ba6]">Score Line</TableHead>
                     <TableHead className="text-[#7a8ba6]">Analysts</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Analysis TAT</TableHead>
                     <TableHead className="text-[#7a8ba6]">Reviewer TAT</TableHead>
                     <TableHead className="text-[#7a8ba6]">Submitted</TableHead>
                     <TableHead className="text-[#7a8ba6]">Actions</TableHead>
@@ -138,11 +137,6 @@ export function ReviewerDashboard() {
                         {match.analyst?.analysts
                           ?.map((a: any) => a.name)
                           .join(", ") || "-"}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="border-border text-[#7a8ba6] font-mono">
-                          {formatTAT(match.analyst?.analysis_tat)}
-                        </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="border-border text-[#f59e0b] font-mono">
