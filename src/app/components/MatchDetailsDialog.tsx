@@ -102,9 +102,24 @@ export function MatchDetailsDialog({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
                     <DetailRow label="Match Analysed On" value={formatDate(match.analyst.analysed_on)} />
-                    <DetailRow label="Live Match Analysed By" value={match.analyst.live_match_analysed_by} />
-                    <DetailRow label="First Half Analysed By" value={match.analyst.first_half_analysed_by} />
-                    <DetailRow label="Second Half Analysed By" value={match.analyst.second_half_analysed_by} />
+                    <DetailRow 
+                      label="Live Match Analysed By" 
+                      value={match.analyst.live_match_analysed_by || match.analyst.live_analysis_by || "-"} 
+                    />
+                    <DetailRow 
+                      label="First Half Analysed By" 
+                      value={
+                        match.analyst.first_half_analysed_by || 
+                        (match.analyst.analysts && match.analyst.analysts.length > 0 ? match.analyst.analysts[0]?.name : "-")
+                      } 
+                    />
+                    <DetailRow 
+                      label="Second Half Analysed By" 
+                      value={
+                        match.analyst.second_half_analysed_by || 
+                        (match.analyst.analysts && match.analyst.analysts.length > 1 ? match.analyst.analysts[1]?.name : "-")
+                      } 
+                    />
                     <DetailRow label="Analysis TAT (mins)" value={match.analyst.analysis_tat} />
                     <DetailRow label="Analysis Start to End Time (mins)" value={match.analyst.analysis_start_end_time} />
                     <DetailRow label="Match Analysis Week" value={match.analyst.analysis_week ? `Week ${match.analyst.analysis_week}` : "-"} />
@@ -115,8 +130,8 @@ export function MatchDetailsDialog({
                     )}
                   </div>
 
-                  {/* Backward compat: show analysts array if present */}
-                  {match.analyst.analysts && match.analyst.analysts.length > 0 && !match.analyst.first_half_analysed_by && (
+                  {/* Show analysts badges if we're using the array format and names aren't in specific fields */}
+                  {match.analyst.analysts && match.analyst.analysts.length > 0 && (
                     <>
                       <Separator className="bg-[#1e2f4a]" />
                       <div>

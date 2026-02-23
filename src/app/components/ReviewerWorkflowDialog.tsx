@@ -22,7 +22,6 @@ export function ReviewerWorkflowDialog({
     reviewed_on: new Date().toISOString().split("T")[0],
     qc_error_count: "",
     review_tat: "",
-    match_status: "",
     reviewer_remarks: "",
     send_back_to_analyst: false,
   });
@@ -58,12 +57,6 @@ export function ReviewerWorkflowDialog({
         return;
       }
 
-      if (!formData.match_status) {
-        toast.error("Please select a match status");
-        setLoading(false);
-        return;
-      }
-
       if (
         formData.send_back_to_analyst &&
         !formData.reviewer_remarks.trim()
@@ -86,7 +79,6 @@ export function ReviewerWorkflowDialog({
             reviewed_on: formData.reviewed_on,
             qc_error_count: parseInt(formData.qc_error_count) || 0,
             review_tat: parseFloat(formData.review_tat) || 0,
-            match_status: formData.match_status,
             reviewer_remarks: formData.reviewer_remarks,
             has_errors: formData.send_back_to_analyst,
             send_back_to_analyst: formData.send_back_to_analyst,
@@ -109,7 +101,6 @@ export function ReviewerWorkflowDialog({
           reviewed_on: new Date().toISOString().split("T")[0],
           qc_error_count: "",
           review_tat: "",
-          match_status: "",
           reviewer_remarks: "",
           send_back_to_analyst: false,
         });
@@ -220,30 +211,6 @@ export function ReviewerWorkflowDialog({
                   placeholder="e.g., 60"
                   required
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className={labelClass}>Match Status *</label>
-              <div className="relative">
-                <select
-                  className={selectClass}
-                  value={formData.match_status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, match_status: e.target.value })
-                  }
-                  required
-                >
-                  <option value="" disabled>
-                    Select status
-                  </option>
-                  <option value="Not Assigned">Not Assigned</option>
-                  <option value="Assigned">Assigned</option>
-                  <option value="Analysed">Analysed</option>
-                  <option value="Completed">Completed</option>
-                  <option value="NA">NA</option>
-                </select>
-                <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9ca3af]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </div>
             </div>
 

@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { CheckCircle, RefreshCw } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { AnalystWorkflowDialog } from "./AnalystWorkflowDialog";
+import { formatTAT } from "../../lib/constants";
 
 interface Match {
   match_id: string;
@@ -121,9 +122,10 @@ export function AnalystDashboard() {
                   <TableRow className="border-border bg-[#0d1526] hover:bg-[#0d1526]">
                     <TableHead className="text-[#7a8ba6]">Match ID</TableHead>
                     <TableHead className="text-[#7a8ba6]">Status</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Client</TableHead>
-                    <TableHead className="text-[#7a8ba6]">Teams</TableHead>
                     <TableHead className="text-[#7a8ba6]">Tournament</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Teams</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Score Line</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Analysis TAT</TableHead>
                     <TableHead className="text-[#7a8ba6]">Received</TableHead>
                     <TableHead className="text-[#7a8ba6]">Actions</TableHead>
                   </TableRow>
@@ -132,15 +134,22 @@ export function AnalystDashboard() {
                   {matches.map((match) => (
                     <TableRow key={match.match_id} className="border-border hover:bg-[#1a2742]/50">
                       <TableCell className="font-mono text-sm text-[#22c55e]">
-                        {match.match_id}
+                        {match.match_id.slice(0, 12)}...
                       </TableCell>
                       <TableCell>{getStatusBadge(match.status)}</TableCell>
-                      <TableCell className="text-[#c0cde0]">{match.manager?.organizer_name}</TableCell>
+                      <TableCell className="text-sm text-[#c0cde0]">
+                        {match.manager?.tournament_name || "-"}
+                      </TableCell>
                       <TableCell className="text-sm text-[#c0cde0]">
                         {match.manager?.team_a} vs {match.manager?.team_b}
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0]">
-                        {match.manager?.tournament_name}
+                        {match.manager?.score_line || "-"}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="border-border text-[#7a8ba6] font-mono">
+                          {formatTAT(match.analyst?.analysis_tat)}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-[#7a8ba6]">
                         {new Date(match.created_at).toLocaleDateString()}

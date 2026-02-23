@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 import { CreateMatchForm } from "./components/CreateMatchForm";
 import { AdminPortal } from "./components/AdminPortal";
+import { ManagerDashboard } from "./components/ManagerDashboard";
 import { AnalystDashboard } from "./components/AnalystDashboard";
 import { ReviewerDashboard } from "./components/ReviewerDashboard";
 import { WorkflowGuide } from "./components/WorkflowGuide";
@@ -326,7 +327,7 @@ export default function App() {
 </TabsTrigger>
 <TabsTrigger value="admin" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
 <LayoutDashboard className="h-4 w-4 shrink-0" />
-<span className="truncate">Admin Portal</span>
+<span className="truncate">Dashboard</span>
 </TabsTrigger>
 <TabsTrigger value="manager" className="flex-1 gap-2 data-[state=active]:bg-[#22c55e] data-[state=active]:text-white data-[state=active]:border-transparent text-[#7a8ba6] rounded-lg py-2.5 px-3 text-sm font-medium">
 <ClipboardList className="h-4 w-4 shrink-0" />
@@ -640,16 +641,7 @@ function YourPage() {
           </TabsContent>
 
           <TabsContent value="manager" key={`manager-${refreshKey}`}>
-            <div className="space-y-6">
-              <div className="rounded-lg border border-border bg-[#111b2e] p-6">
-                <h2 className="text-2xl font-bold mb-2 text-white">Manager Dashboard</h2>
-                <p className="text-[#7a8ba6] mb-6 text-sm">
-                  Create new matches using the "Demo Data" button above.
-                  All created matches will appear in the Admin Portal.
-                </p>
-                <AdminPortal />
-              </div>
-            </div>
+            <ManagerDashboard />
           </TabsContent>
 
           <TabsContent value="analyst" key={`analyst-${refreshKey}`}>

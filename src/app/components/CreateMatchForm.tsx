@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Upload } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { Button } from "./ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 
 interface CreateMatchFormProps {
   onMatchCreated: () => void;
@@ -11,6 +12,7 @@ interface CreateMatchFormProps {
 export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     organizer_name: "",
     client_type: "",
@@ -18,7 +20,7 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
     team_a: "",
     team_b: "",
     game_time: "",
-    match_country: "",
+    match_city: "",
     tournament_name: "",
     match_video_type: "",
     match_age_group: "",
@@ -71,7 +73,7 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
           },
           body: JSON.stringify({
             ...formData,
-            venue: formData.match_country,
+            venue: formData.match_city,
           }),
         }
       );
@@ -88,7 +90,7 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
           team_a: "",
           team_b: "",
           game_time: "",
-          match_country: "",
+          match_city: "",
           tournament_name: "",
           match_video_type: "",
           match_age_group: "",
@@ -101,6 +103,47 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
     } catch (error) {
       console.error("Error creating match:", error);
       toast.error("Failed to create match");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCsvUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append("file", csvFile);
+
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/matches/bulk`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+          body: formDataObj,
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`${data.count || 0} matches created successfully!`);
+        setOpen(false);
+        setCsvFile(null);
+        onMatchCreated();
+      } else {
+        toast.error("Failed to create matches: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error uploading CSV:", error);
+      toast.error("Failed to upload CSV");
     } finally {
       setLoading(false);
     }
@@ -139,8 +182,16 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
               </button>
             </div>
 
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="px-6 pb-6">
+            {/* Tabs for Single/Multiple */}
+            <Tabs defaultValue="single" className="px-6">
+              <TabsList className="grid w-full grid-cols-2 bg-[#1e2d3d] mb-4">
+                <TabsTrigger value="single" className="data-[state=active]:bg-[#22c55e] data-[state=active]:text-white">Single Match</TabsTrigger>
+                <TabsTrigger value="multiple" className="data-[state=active]:bg-[#22c55e] data-[state=active]:text-white">Multiple Matches (CSV)</TabsTrigger>
+              </TabsList>
+
+              {/* Single Match Form */}
+              <TabsContent value="single">
+                <form onSubmit={handleSubmit} className="pb-6">
               {/* Section: Match Details */}
               <div className="mb-5">
                 <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5a6f84] mb-3">Match Details</h3>
@@ -290,14 +341,14 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
                 </div>
 
                 <div>
-                  <label className={labelClass}>Match Country *</label>
+                  <label className={labelClass}>Match City *</label>
                   <input
                     className={inputClass}
-                    value={formData.match_country}
+                    value={formData.match_city}
                     onChange={(e) =>
-                      setFormData({ ...formData, match_country: e.target.value })
+                      setFormData({ ...formData, match_city: e.target.value })
                     }
-                    placeholder="Enter country"
+                    placeholder="Enter city"
                     required
                   />
                 </div>
@@ -362,15 +413,61 @@ export function CreateMatchForm({ onMatchCreated }: CreateMatchFormProps) {
                 </div>
               </div>
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading}
-                className="mt-6 w-full h-11 rounded-md bg-[#2563eb] text-white font-medium text-sm hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {loading ? "Creating..." : "Create Match"}
-              </button>
-            </form>
+                  {/* Submit */}
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="mt-6 w-full h-11 rounded-md bg-[#2563eb] text-white font-medium text-sm hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {loading ? "Creating..." : "Create Match"}
+                  </button>
+                </form>
+              </TabsContent>
+
+              {/* Multiple Matches CSV Upload */}
+              <TabsContent value="multiple">
+                <form onSubmit={handleCsvUpload} className="pb-6">
+                  <div className="space-y-4">
+                    <div className="bg-[#1e2d3d] border border-[#2a3a4e] rounded-lg p-4">
+                      <h3 className="text-sm font-medium text-[#c8d6e5] mb-2">CSV Format Requirements</h3>
+                      <p className="text-xs text-[#7a8ba6] mb-3">
+                        Your CSV file must include the following columns:
+                      </p>
+                      <code className="block text-xs text-[#22c55e] bg-[#0f1923] p-3 rounded border border-[#2a3a4e] overflow-x-auto">
+                        organizer_name,client_type,match_analysis_type,team_a,team_b,game_time,match_city,tournament_name,match_video_type,match_age_group,match_received_on
+                      </code>
+                    </div>
+
+                    <div>
+                      <label className={labelClass}>Upload CSV File *</label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".csv"
+                          onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+                          className="w-full h-11 rounded-md border border-[#2a3a4e] bg-[#1e2d3d] px-3 py-2 text-sm text-[#c8d6e5] file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[#22c55e] file:text-white hover:file:bg-[#16a34a] file:cursor-pointer"
+                          required
+                        />
+                      </div>
+                      {csvFile && (
+                        <p className="text-xs text-[#22c55e] mt-2">
+                          <Upload className="h-3 w-3 inline mr-1" />
+                          Selected: {csvFile.name}
+                        </p>
+                      )}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading || !csvFile}
+                      className="w-full h-11 rounded-md bg-[#2563eb] text-white font-medium text-sm hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {loading ? "Uploading..." : "Upload and Create Matches"}
+                    </button>
+                  </div>
+                </form>
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       )}

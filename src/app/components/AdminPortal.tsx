@@ -147,7 +147,7 @@ export function AdminPortal() {
     <div className="space-y-6">
       <Card className="bg-[#111b2e] border-border">
         <CardHeader>
-          <CardTitle className="text-white">Admin Portal - All Matches</CardTitle>
+          <CardTitle className="text-white">Dashboard - All Matches</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Filters */}
@@ -181,16 +181,21 @@ export function AdminPortal() {
                 </SelectTrigger>
                 <SelectContent className="bg-[#111b2e] border-border">
                   <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="created">Created</SelectItem>
-                  <SelectItem value="in_review">In Review</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rework">Rework</SelectItem>
+                  <SelectItem value="1">Match Created</SelectItem>
+                  <SelectItem value="2">Video Uploaded</SelectItem>
+                  <SelectItem value="3">Analysis Done</SelectItem>
+                  <SelectItem value="4">Resources Assigned</SelectItem>
+                  <SelectItem value="5">Analysis in Progress</SelectItem>
+                  <SelectItem value="6">Review in Progress</SelectItem>
+                  <SelectItem value="7">Completed</SelectItem>
+                  <SelectItem value="8">Mark for Review</SelectItem>
+                  <SelectItem value="9">Issue Found</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="client_type" className="text-[#c0cde0] text-xs">Client Type Filter</Label>
+              <Label htmlFor="client_type" className="text-[#c0cde0] text-xs">Creator Filter</Label>
               <Select
                 value={filters.client_type || "all"}
                 onValueChange={(value) =>
@@ -198,13 +203,13 @@ export function AdminPortal() {
                 }
               >
                 <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0] h-9 text-sm">
-                  <SelectValue placeholder="All types" />
+                  <SelectValue placeholder="All creators" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#111b2e] border-border">
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Unpaid">Unpaid</SelectItem>
-                  <SelectItem value="Demo">Demo</SelectItem>
+                  <SelectItem value="all">All creators</SelectItem>
+                  <SelectItem value="Created by Client">Created by Client</SelectItem>
+                  <SelectItem value="Created by B.T">Created by B.T</SelectItem>
+                  <SelectItem value="Created">Created (Manager)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -318,10 +323,15 @@ export function AdminPortal() {
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.analyst?.first_half_analysed_by || 
-                         match.analyst?.analysts?.map((a: any) => a.name).join(", ") || "-"}
+                         (match.analyst?.analysts && match.analyst.analysts.length > 0 
+                           ? match.analyst.analysts[0]?.name 
+                           : "-")}
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.analyst?.second_half_analysed_by || "-"}
+                        {match.analyst?.second_half_analysed_by || 
+                         (match.analyst?.analysts && match.analyst.analysts.length > 1 
+                           ? match.analyst.analysts[1]?.name 
+                           : "-")}
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.reviewer?.reviewed_by || "-"}
