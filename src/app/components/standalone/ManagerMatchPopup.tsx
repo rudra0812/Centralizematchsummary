@@ -1,12 +1,28 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, Upload, Download, Edit2, Trash2, Plus } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Button } from "../ui/button";
 
 interface ManagerMatchPopupProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+}
+
+interface CSVRow {
+  organizer_name: string;
+  client_type: string;
+  match_analysis_type: string;
+  team_a: string;
+  team_b: string;
+  game_time: string;
+  match_city: string;
+  tournament_name: string;
+  match_video_type: string;
+  match_age_group: string;
+  match_received_on: string;
 }
 
 export function ManagerMatchPopup({
@@ -15,6 +31,10 @@ export function ManagerMatchPopup({
   onSuccess,
 }: ManagerMatchPopupProps) {
   const [loading, setLoading] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [csvData, setCsvData] = useState<CSVRow[]>([]);
+  const [showPreview, setShowPreview] = useState(false);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     organizer_name: "",
     client_type: "",
@@ -28,6 +48,110 @@ export function ManagerMatchPopup({
     match_age_group: "",
     match_received_on: new Date().toISOString().split("T")[0],
   });
+
+  const handleCsvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setCsvFile(file);
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      const lines = text.split("\n").filter((line) => line.trim());
+      if (lines.length < 2) {
+        toast.error("CSV file is empty or invalid");
+        return;
+      }
+
+      const headers = lines[0].split(",").map((h) => h.trim());
+      const rows: CSVRow[] = [];
+
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(",").map((v) => v.trim());
+        const row: any = {};
+        headers.forEach((header, index) => {
+          row[header] = values[index] || "";
+        });
+        rows.push(row);
+      }
+
+      setCsvData(rows);
+      setShowPreview(true);
+    };
+    reader.readAsText(file);
+  };
+
+  const handleDownloadCsv = () => {
+    if (csvData.length === 0) return;
+
+    const headers = Object.keys(csvData[0]);
+    const csvContent = [
+      headers.join(","),
+      ...csvData.map((row) =>
+        headers.map((header) => row[header as keyof CSVRow]).join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `edited_matches_${Date.now()}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("CSV downloaded successfully");
+  };
+
+  const handleDeleteRow = (index: number) => {
+    setCsvData(csvData.filter((_, i) => i !== index));
+    toast.success("Row deleted");
+  };
+
+  const handleUpdateRow = (index: number, field: keyof CSVRow, value: string) => {
+    const newData = [...csvData];
+    newData[index] = { ...newData[index], [field]: value };
+    setCsvData(newData);
+  };
+
+  const handleCsvUpload = async () => {
+    if (csvData.length === 0) {
+      toast.error("No data to upload");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/matches/bulk`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${publicAnonKey}`,
+          },
+          body: JSON.stringify({ matches: csvData.map(row => ({ ...row, venue: row.match_city })) }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast.success(`${csvData.length} matches created successfully!`);
+        onOpenChange(false);
+        setCsvFile(null);
+        setCsvData([]);
+        setShowPreview(false);
+        onSuccess?.();
+      } else {
+        toast.error("Failed to create matches: " + data.error);
+      }
+    } catch (error) {
+      console.error("Error uploading CSV:", error);
+      toast.error("Failed to upload CSV");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -135,8 +259,26 @@ export function ManagerMatchPopup({
           </button>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 pb-6">
+        {/* Tabs for Single/Multiple */}
+        <Tabs defaultValue="single" className="px-6">
+          <TabsList className="grid w-full grid-cols-2 bg-[#1e2d3d] mb-4">
+            <TabsTrigger
+              value="single"
+              className="data-[state=active]:bg-[#22c55e] data-[state=active]:text-white"
+            >
+              Single Match
+            </TabsTrigger>
+            <TabsTrigger
+              value="multiple"
+              className="data-[state=active]:bg-[#22c55e] data-[state=active]:text-white"
+            >
+              Multiple Matches (CSV)
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Single Match Form */}
+          <TabsContent value="single">
+            <form onSubmit={handleSubmit} className="pb-6">
           {/* Section: Match Details */}
           <div className="mb-5">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5a6f84] mb-3">Match Details</h3>
@@ -337,15 +479,218 @@ export function ManagerMatchPopup({
             </div>
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-6 w-full h-11 rounded-md bg-[#2563eb] text-white font-medium text-sm hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? "Creating..." : "Create Match"}
-          </button>
-        </form>
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-6 w-full h-11 rounded-md bg-[#2563eb] text-white font-medium text-sm hover:bg-[#1d4ed8] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? "Creating..." : "Create Match"}
+              </button>
+            </form>
+          </TabsContent>
+
+          {/* Multiple Matches CSV Upload */}
+          <TabsContent value="multiple">
+            <div className="pb-6 space-y-4">
+              {!showPreview ? (
+                <>
+                  <div className="bg-[#1e2d3d] border border-[#2a3a4e] rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-[#c8d6e5] mb-2">
+                      CSV Format Requirements
+                    </h3>
+                    <p className="text-xs text-[#7a8ba6] mb-3">
+                      Your CSV file must include the following columns:
+                    </p>
+                    <code className="block text-xs text-[#22c55e] bg-[#0f1923] p-3 rounded border border-[#2a3a4e] overflow-x-auto">
+                      organizer_name,client_type,match_analysis_type,team_a,team_b,game_time,match_city,tournament_name,match_video_type,match_age_group,match_received_on
+                    </code>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Upload CSV File *</label>
+                    <div className="relative">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        onChange={handleCsvFileSelect}
+                        className="w-full h-11 rounded-md border border-[#2a3a4e] bg-[#1e2d3d] px-3 py-2 text-sm text-[#c8d6e5] file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[#22c55e] file:text-white hover:file:bg-[#16a34a] file:cursor-pointer"
+                      />
+                    </div>
+                    {csvFile && !showPreview && (
+                      <p className="text-xs text-[#22c55e] mt-2">
+                        <Upload className="h-3 w-3 inline mr-1" />
+                        Selected: {csvFile.name}
+                      </p>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-medium text-[#c8d6e5]">
+                      CSV Preview ({csvData.length} rows)
+                    </h3>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleDownloadCsv}
+                        className="gap-2 border-[#2a3a4e] text-[#c8d6e5] hover:bg-[#1e2d3d]"
+                      >
+                        <Download className="h-4 w-4" />
+                        Download
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setShowPreview(false);
+                          setCsvFile(null);
+                          setCsvData([]);
+                        }}
+                        className="gap-2 border-[#2a3a4e] text-[#c8d6e5] hover:bg-[#1e2d3d]"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="border border-[#2a3a4e] rounded-lg max-h-96 overflow-auto">
+                    <table className="w-full text-xs">
+                      <thead className="bg-[#1e2d3d] sticky top-0">
+                        <tr>
+                          <th className="text-left p-2 text-[#7a8ba6]">#</th>
+                          <th className="text-left p-2 text-[#7a8ba6]">Client</th>
+                          <th className="text-left p-2 text-[#7a8ba6]">Team A</th>
+                          <th className="text-left p-2 text-[#7a8ba6]">Team B</th>
+                          <th className="text-left p-2 text-[#7a8ba6]">City</th>
+                          <th className="text-left p-2 text-[#7a8ba6]">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {csvData.map((row, index) => (
+                          <tr
+                            key={index}
+                            className="border-t border-[#2a3a4e] hover:bg-[#1e2d3d]"
+                          >
+                            <td className="p-2 text-[#7a8ba6]">{index + 1}</td>
+                            <td className="p-2">
+                              {editingIndex === index ? (
+                                <input
+                                  className="w-full bg-[#0f1923] border border-[#2a3a4e] rounded px-2 py-1 text-[#c8d6e5]"
+                                  value={row.organizer_name}
+                                  onChange={(e) =>
+                                    handleUpdateRow(
+                                      index,
+                                      "organizer_name",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <span className="text-[#c8d6e5]">
+                                  {row.organizer_name}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {editingIndex === index ? (
+                                <input
+                                  className="w-full bg-[#0f1923] border border-[#2a3a4e] rounded px-2 py-1 text-[#c8d6e5]"
+                                  value={row.team_a}
+                                  onChange={(e) =>
+                                    handleUpdateRow(index, "team_a", e.target.value)
+                                  }
+                                />
+                              ) : (
+                                <span className="text-[#c8d6e5]">{row.team_a}</span>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {editingIndex === index ? (
+                                <input
+                                  className="w-full bg-[#0f1923] border border-[#2a3a4e] rounded px-2 py-1 text-[#c8d6e5]"
+                                  value={row.team_b}
+                                  onChange={(e) =>
+                                    handleUpdateRow(index, "team_b", e.target.value)
+                                  }
+                                />
+                              ) : (
+                                <span className="text-[#c8d6e5]">{row.team_b}</span>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              {editingIndex === index ? (
+                                <input
+                                  className="w-full bg-[#0f1923] border border-[#2a3a4e] rounded px-2 py-1 text-[#c8d6e5]"
+                                  value={row.match_city}
+                                  onChange={(e) =>
+                                    handleUpdateRow(
+                                      index,
+                                      "match_city",
+                                      e.target.value
+                                    )
+                                  }
+                                />
+                              ) : (
+                                <span className="text-[#c8d6e5]">
+                                  {row.match_city}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-2">
+                              <div className="flex gap-1">
+                                {editingIndex === index ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingIndex(null)}
+                                    className="p-1 text-[#22c55e] hover:bg-[#0f1923] rounded"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingIndex(index)}
+                                    className="p-1 text-[#3b82f6] hover:bg-[#0f1923] rounded"
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </button>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteRow(index)}
+                                  className="p-1 text-[#ef4444] hover:bg-[#0f1923] rounded"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleCsvUpload}
+                    disabled={loading || csvData.length === 0}
+                    className="w-full h-11 bg-[#2563eb] hover:bg-[#1d4ed8] text-white"
+                  >
+                    {loading
+                      ? "Uploading..."
+                      : `Upload and Create ${csvData.length} Matches`}
+                  </Button>
+                </>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

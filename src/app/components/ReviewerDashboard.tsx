@@ -113,6 +113,7 @@ export function ReviewerDashboard() {
                     <TableHead className="text-[#7a8ba6]">Score Line</TableHead>
                     <TableHead className="text-[#7a8ba6]">Analysts</TableHead>
                     <TableHead className="text-[#7a8ba6]">Analysis TAT</TableHead>
+                    <TableHead className="text-[#7a8ba6]">Reviewer TAT</TableHead>
                     <TableHead className="text-[#7a8ba6]">Submitted</TableHead>
                     <TableHead className="text-[#7a8ba6]">Actions</TableHead>
                   </TableRow>
@@ -140,6 +141,11 @@ export function ReviewerDashboard() {
                       <TableCell>
                         <Badge variant="outline" className="border-border text-[#7a8ba6]">
                           {match.analyst?.analysis_tat ? `${match.analyst.analysis_tat} mins` : "Not set"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="border-border text-[#f59e0b]">
+                          {match.reviewer?.reviewer_tat ? `${match.reviewer.reviewer_tat} mins` : "Not set"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-[#7a8ba6]">
