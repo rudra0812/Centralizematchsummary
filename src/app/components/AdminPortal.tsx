@@ -323,10 +323,15 @@ export function AdminPortal() {
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.analyst?.first_half_analysed_by || 
-                         match.analyst?.analysts?.map((a: any) => a.name).join(", ") || "-"}
+                         (match.analyst?.analysts && match.analyst.analysts.length > 0 
+                           ? match.analyst.analysts[0]?.name 
+                           : "-")}
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.analyst?.second_half_analysed_by || "-"}
+                        {match.analyst?.second_half_analysed_by || 
+                         (match.analyst?.analysts && match.analyst.analysts.length > 1 
+                           ? match.analyst.analysts[1]?.name 
+                           : "-")}
                       </TableCell>
                       <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
                         {match.reviewer?.reviewed_by || "-"}
