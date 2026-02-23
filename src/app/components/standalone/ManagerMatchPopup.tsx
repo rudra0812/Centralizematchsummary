@@ -25,6 +25,12 @@ interface CSVRow {
   match_received_on: string;
 }
 
+// Mock CSV data for reference
+const MOCK_CSV_DATA = `organizer_name,client_type,match_analysis_type,team_a,team_b,game_time,match_city,tournament_name,match_video_type,match_age_group,match_received_on
+Manchester United Academy,Paid,Pro,United U18,City U18,90,Manchester,Premier League Youth Cup,Veo,U18,2024-01-15
+Barcelona FC,Paid,B2C,Barca B,Real Madrid B,90,Barcelona,La Liga Promise,Broadcasting,U19,2024-01-16
+Ajax Amsterdam,Demo,Basic,Ajax Youth,PSV Youth,80,Amsterdam,Eredivisie Youth League,Pixelot,U17,2024-01-17`;
+
 export function ManagerMatchPopup({
   open,
   onOpenChange,
@@ -48,6 +54,17 @@ export function ManagerMatchPopup({
     match_age_group: "",
     match_received_on: new Date().toISOString().split("T")[0],
   });
+
+  const handleDownloadSampleCsv = () => {
+    const blob = new Blob([MOCK_CSV_DATA], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sample_matches_template.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Sample CSV template downloaded");
+  };
 
   const handleCsvFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -496,15 +513,49 @@ export function ManagerMatchPopup({
               {!showPreview ? (
                 <>
                   <div className="bg-[#1e2d3d] border border-[#2a3a4e] rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-[#c8d6e5] mb-2">
-                      CSV Format Requirements
-                    </h3>
-                    <p className="text-xs text-[#7a8ba6] mb-3">
-                      Your CSV file must include the following columns:
-                    </p>
-                    <code className="block text-xs text-[#22c55e] bg-[#0f1923] p-3 rounded border border-[#2a3a4e] overflow-x-auto">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="text-sm font-medium text-[#c8d6e5] mb-1">
+                          CSV Format Requirements
+                        </h3>
+                        <p className="text-xs text-[#7a8ba6]">
+                          Your CSV file must include the following columns:
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleDownloadSampleCsv}
+                        className="gap-2 border-[#22c55e]/30 text-[#22c55e] hover:bg-[#22c55e]/10 shrink-0"
+                      >
+                        <Download className="h-3.5 w-3.5" />
+                        Sample CSV
+                      </Button>
+                    </div>
+                    <code className="block text-xs text-[#22c55e] bg-[#0f1923] p-3 rounded border border-[#2a3a4e] overflow-x-auto mb-3">
                       organizer_name,client_type,match_analysis_type,team_a,team_b,game_time,match_city,tournament_name,match_video_type,match_age_group,match_received_on
                     </code>
+                    <div className="bg-[#0f1923] border border-[#2a3a4e] rounded p-3">
+                      <div className="flex items-start gap-2 mb-2">
+                        <div className="shrink-0 mt-0.5">
+                          <svg className="h-3.5 w-3.5 text-[#60a5fa]" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-[#60a5fa] mb-1">Mock Data Example (Reference Only)</p>
+                          <p className="text-xs text-[#7a8ba6] leading-relaxed">
+                            Use the sample CSV above as a template. It contains mock data for reference to help you understand the format. Download it, edit with your actual match data, and upload.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-xs text-[#7a8ba6] bg-[#1e2d3d]/50 rounded p-2 font-mono overflow-x-auto">
+                        <div className="text-[#22c55e] mb-1">Example rows:</div>
+                        <div className="opacity-75">Manchester United Academy,Paid,Pro,United U18,City U18,90,Manchester,...</div>
+                        <div className="opacity-75">Barcelona FC,Paid,B2C,Barca B,Real Madrid B,90,Barcelona,...</div>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
