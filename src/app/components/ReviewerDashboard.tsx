@@ -15,6 +15,7 @@ import { CheckCircle, RefreshCw, Eye } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { ReviewerWorkflowDialog } from "./ReviewerWorkflowDialog";
 import { MatchDetailsDialog } from "./MatchDetailsDialog";
+import { formatTAT } from "../../lib/constants";
 
 interface Match {
   match_id: string;
@@ -139,13 +140,13 @@ export function ReviewerDashboard() {
                           .join(", ") || "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-border text-[#7a8ba6]">
-                          {match.analyst?.analysis_tat ? `${match.analyst.analysis_tat} mins` : "Not set"}
+                        <Badge variant="outline" className="border-border text-[#7a8ba6] font-mono">
+                          {formatTAT(match.analyst?.analysis_tat)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-border text-[#f59e0b]">
-                          {match.reviewer?.reviewer_tat ? `${match.reviewer.reviewer_tat} mins` : "Not set"}
+                        <Badge variant="outline" className="border-border text-[#f59e0b] font-mono">
+                          {formatTAT(match.reviewer?.reviewer_tat)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-[#7a8ba6]">

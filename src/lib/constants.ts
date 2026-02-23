@@ -64,3 +64,24 @@ export function getStatusStyle(status: number): string {
       return "bg-[#6b7280]/15 text-[#9ca3af] border-[#6b7280]/30";
   }
 }
+
+// Format TAT in seconds to HH:MM:SS format
+export function formatTAT(seconds: number | string | null | undefined): string {
+  if (seconds === null || seconds === undefined || seconds === "") {
+    return "Not set";
+  }
+
+  const totalSeconds = typeof seconds === "string" ? parseInt(seconds, 10) : seconds;
+  
+  if (isNaN(totalSeconds) || totalSeconds < 0) {
+    return "Not set";
+  }
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  const pad = (num: number) => String(num).padStart(2, "0");
+
+  return `${pad(hours)}:${pad(minutes)}:${pad(secs)}`;
+}

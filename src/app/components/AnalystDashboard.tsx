@@ -14,6 +14,7 @@ import { toast } from "sonner";
 import { CheckCircle, RefreshCw } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { AnalystWorkflowDialog } from "./AnalystWorkflowDialog";
+import { formatTAT } from "../../lib/constants";
 
 interface Match {
   match_id: string;
@@ -146,8 +147,8 @@ export function AnalystDashboard() {
                         {match.manager?.score_line || "-"}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="border-border text-[#7a8ba6]">
-                          {match.analyst?.analysis_tat ? `${match.analyst.analysis_tat} mins` : "Not set"}
+                        <Badge variant="outline" className="border-border text-[#7a8ba6] font-mono">
+                          {formatTAT(match.analyst?.analysis_tat)}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-[#7a8ba6]">
