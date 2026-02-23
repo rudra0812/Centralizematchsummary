@@ -269,7 +269,10 @@ export function ManagerDashboard() {
                             />
                           ) : (
                             <span className="text-sm text-[#c0cde0]">
-                              {match.analyst?.first_half_analysed_by || "-"}
+                              {match.analyst?.first_half_analysed_by || 
+                               (match.analyst?.analysts && match.analyst.analysts.length > 0 
+                                 ? match.analyst.analysts[0]?.name 
+                                 : "-")}
                             </span>
                           )}
                         </TableCell>
@@ -285,7 +288,10 @@ export function ManagerDashboard() {
                             />
                           ) : (
                             <span className="text-sm text-[#c0cde0]">
-                              {match.analyst?.second_half_analysed_by || "-"}
+                              {match.analyst?.second_half_analysed_by || 
+                               (match.analyst?.analysts && match.analyst.analysts.length > 1 
+                                 ? match.analyst.analysts[1]?.name 
+                                 : "-")}
                             </span>
                           )}
                         </TableCell>
