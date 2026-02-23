@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { RefreshCw, Eye, Edit, Save, X } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { MatchDetailsDialog } from "./MatchDetailsDialog";
-import { MatchStatusLabels, getStatusStyle, CreatorType } from "../lib/constants";
+import { MatchStatusLabels, getStatusStyle, CreatorType } from "../../lib/constants";
 
 interface Match {
   match_id: string;
