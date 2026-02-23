@@ -22,7 +22,7 @@ export function ManagerMatchPopup({
     team_a: "",
     team_b: "",
     game_time: "",
-    match_country: "",
+    match_city: "",
     tournament_name: "",
     match_video_type: "",
     match_age_group: "",
@@ -74,7 +74,7 @@ export function ManagerMatchPopup({
           },
           body: JSON.stringify({
             ...formData,
-            venue: formData.match_country,
+            venue: formData.match_city,
           }),
         }
       );
@@ -91,7 +91,7 @@ export function ManagerMatchPopup({
           team_a: "",
           team_b: "",
           game_time: "",
-          match_country: "",
+          match_city: "",
           tournament_name: "",
           match_video_type: "",
           match_age_group: "",
@@ -274,14 +274,14 @@ export function ManagerMatchPopup({
             </div>
 
             <div>
-              <label className={labelClass}>Match Country *</label>
+              <label className={labelClass}>Match City *</label>
               <input
                 className={inputClass}
-                value={formData.match_country}
+                value={formData.match_city}
                 onChange={(e) =>
-                  setFormData({ ...formData, match_country: e.target.value })
+                  setFormData({ ...formData, match_city: e.target.value })
                 }
-                placeholder="Enter country"
+                placeholder="Enter city"
                 required
               />
             </div>
