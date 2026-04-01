@@ -5,7 +5,9 @@ import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { toast } from "sonner";
 import { LogIn, Zap, Mail, Lock, UserPlus, AlertCircle } from "lucide-react";
-import { supabase } from "../../lib/supabase/client";
+import { createClient } from "../../lib/supabase/client";
+
+const supabase = createClient();
 
 export type UserRole = "manager" | "analyst" | "reviewer" | "admin";
 

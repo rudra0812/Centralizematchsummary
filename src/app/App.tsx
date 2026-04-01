@@ -9,7 +9,9 @@ import { Button } from "./components/ui/button";
 import { LogOut, Zap, Database, ClipboardList, UserCheck, Shield, Lock } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { toast } from "sonner";
-import { supabase } from "../lib/supabase/client";
+import { createClient } from "../../lib/supabase/client";
+
+const supabase = createClient();
 
 interface User {
   role: UserRole;

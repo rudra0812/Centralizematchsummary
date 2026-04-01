@@ -3,7 +3,10 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { toast } from "sonner";
 import { RefreshCw, Shield, Check, Clock, AlertCircle } from "lucide-react";
-import { supabase } from "../../lib/supabase/client";
+import { createClient } from "../../lib/supabase/client";
+import { projectId, publicAnonKey } from "/utils/supabase/info";
+
+const supabase = createClient();
 
 interface UserRole {
   id: string;
@@ -35,11 +38,14 @@ export function AdminPortal({ userName }: AdminPortalProps) {
       setLoading(true);
       const token = localStorage.getItem("auth_token");
 
-      const response = await fetch("/admin/users", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/admin/users`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to fetch users");
@@ -67,17 +73,20 @@ export function AdminPortal({ userName }: AdminPortalProps) {
       setIsAssigning(true);
       const token = localStorage.getItem("auth_token");
 
-      const response = await fetch("/admin/assign-role", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          email: selectedUser.email,
-          role: assigningRole,
-        }),
-      });
+      const response = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/admin/assign-role`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            email: selectedUser.email,
+            role: assigningRole,
+          }),
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to assign role");
