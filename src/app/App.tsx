@@ -1,30 +1,81 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "./components/ui/sonner";
 import { LoginPage, UserRole } from "./components/LoginPage";
 import { ManagerPortal } from "./components/ManagerPortal";
 import { AnalystPortal } from "./components/AnalystPortal";
 import { ReviewerPortal } from "./components/ReviewerPortal";
+import { AdminPortal } from "./components/AdminPortal";
 import { Button } from "./components/ui/button";
-import { LogOut, Zap, Database, ClipboardList, UserCheck, Shield } from "lucide-react";
+import { LogOut, Zap, Database, ClipboardList, UserCheck, Shield, Lock } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
 import { toast } from "sonner";
+import { supabase } from "../lib/supabase/client";
 
 interface User {
   role: UserRole;
-  name: string;
+  email: string;
 }
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const handleLogin = (role: UserRole, name: string) => {
-    setUser({ role, name });
+  // Check session on mount
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
+        // Verify token and get user
+        const { data, error } = await supabase.auth.getUser(token);
+        if (error || !data.user) {
+          localStorage.removeItem("auth_token");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch user role
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("*")
+          .eq("email", data.user.email)
+          .single();
+
+        if (roleData?.is_active || roleData?.role === "admin") {
+          setUser({
+            role: roleData?.role as UserRole,
+            email: data.user.email || "",
+          });
+        }
+      } catch (error) {
+        console.error("Session check error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+  }, []);
+
+  const handleLogin = (role: UserRole, email: string) => {
+    setUser({ role, email });
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    toast.success("Logged out successfully");
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.removeItem("auth_token");
+      setUser(null);
+      toast.success("Logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      setUser(null);
+    }
   };
 
   const handleRefresh = () => {
@@ -283,6 +334,18 @@ export default function App() {
     );
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#080d19] flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-12 w-12 rounded-lg bg-[#22c55e] mx-auto flex items-center justify-center animate-pulse"></div>
+          <p className="text-[#7a8ba6]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show login page if not logged in
   if (!user) {
     return (
@@ -315,6 +378,8 @@ export default function App() {
         return <UserCheck className="h-4 w-4" />;
       case "reviewer":
         return <Shield className="h-4 w-4" />;
+      case "admin":
+        return <Lock className="h-4 w-4" />;
       default:
         return <ClipboardList className="h-4 w-4" />;
     }
@@ -352,9 +417,9 @@ export default function App() {
                 <span className="capitalize">{user.role}</span>
               </div>
 
-              {/* User Name */}
+              {/* User Email */}
               <div className="text-sm text-[#c0cde0]">
-                Welcome, <span className="font-medium text-white">{user.name}</span>
+                <span className="font-medium text-white">{user.email}</span>
               </div>
 
               {/* Demo Data Button (Manager only) */}
@@ -385,9 +450,10 @@ export default function App() {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8" key={refreshKey}>
-        {user.role === "manager" && <ManagerPortal userName={user.name} onRefresh={handleRefresh} />}
-        {user.role === "analyst" && <AnalystPortal userName={user.name} />}
-        {user.role === "reviewer" && <ReviewerPortal userName={user.name} />}
+        {user.role === "manager" && <ManagerPortal userName={user.email} onRefresh={handleRefresh} />}
+        {user.role === "analyst" && <AnalystPortal userName={user.email} />}
+        {user.role === "reviewer" && <ReviewerPortal userName={user.email} />}
+        {user.role === "admin" && <AdminPortal userName={user.email} />}
       </main>
     </div>
   );
