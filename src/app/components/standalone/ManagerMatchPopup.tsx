@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "sonner";
-import { X } from "lucide-react";
+import { X, Download, Info, Upload } from "lucide-react";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
+import { Button } from "../ui/button";
 
 interface ManagerMatchPopupProps {
   open: boolean;
@@ -9,12 +10,17 @@ interface ManagerMatchPopupProps {
   onSuccess?: () => void;
 }
 
+type TabType = "single" | "csv";
+
 export function ManagerMatchPopup({
   open,
   onOpenChange,
   onSuccess,
 }: ManagerMatchPopupProps) {
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("single");
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     organizer_name: "",
     client_type: "",
@@ -109,6 +115,149 @@ export function ManagerMatchPopup({
     }
   };
 
+  const csvColumns = [
+    "organizer_name",
+    "client_type",
+    "match_analysis_type",
+    "team_a",
+    "team_b",
+    "game_time",
+    "match_city",
+    "tournament_name",
+    "match_video_type",
+    "match_age_group",
+    "match_received_on",
+  ];
+
+  const handleDownloadSampleCSV = () => {
+    const headers = csvColumns.join(",");
+    const sampleRow1 = "Manchester United Academy,Paid,Pro,United U18,City U18,90,Manchester,Premier League Youth,Veo,U18,2026-03-15";
+    const sampleRow2 = "Barcelona FC,Paid,B2C,Barca B,Real Madrid B,90,Barcelona,La Liga B,Hudl,U21,2026-03-16";
+    const csvContent = `${headers}\n${sampleRow1}\n${sampleRow2}`;
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "sample_matches.csv";
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+    toast.success("Sample CSV downloaded!");
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.name.endsWith(".csv")) {
+        toast.error("Please upload a CSV file");
+        return;
+      }
+      setCsvFile(file);
+    }
+  };
+
+  const handleCSVUpload = async () => {
+    if (!csvFile) {
+      toast.error("Please select a CSV file");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const text = await csvFile.text();
+      const lines = text.trim().split("\n");
+      const headers = lines[0].split(",").map((h) => h.trim());
+      
+      // Validate headers
+      const missingColumns = csvColumns.filter((col) => !headers.includes(col));
+      if (missingColumns.length > 0) {
+        toast.error(`Missing columns: ${missingColumns.join(", ")}`);
+        setLoading(false);
+        return;
+      }
+
+      const matches = [];
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(",").map((v) => v.trim());
+        if (values.length !== headers.length) continue;
+        
+        const match: Record<string, string> = {};
+        headers.forEach((header, index) => {
+          match[header] = values[index];
+        });
+        matches.push(match);
+      }
+
+      if (matches.length === 0) {
+        toast.error("No valid matches found in CSV");
+        setLoading(false);
+        return;
+      }
+
+      // Create matches one by one
+      let successCount = 0;
+      let failCount = 0;
+
+      for (const match of matches) {
+        try {
+          const response = await fetch(
+            `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/matches`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${publicAnonKey}`,
+              },
+              body: JSON.stringify({
+                organizer_name: match.organizer_name,
+                client_type: match.client_type,
+                match_analysis_type: match.match_analysis_type,
+                team_a: match.team_a,
+                team_b: match.team_b,
+                game_time: match.game_time,
+                venue: match.match_city,
+                tournament_name: match.tournament_name,
+                match_video_type: match.match_video_type,
+                match_age_group: match.match_age_group,
+                match_received_on: match.match_received_on,
+              }),
+            }
+          );
+
+          const data = await response.json();
+          if (data.success) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch {
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully created ${successCount} match(es)!`);
+        onSuccess?.();
+      }
+      if (failCount > 0) {
+        toast.error(`Failed to create ${failCount} match(es)`);
+      }
+
+      setCsvFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      onOpenChange(false);
+    } catch (error) {
+      console.error("Error processing CSV:", error);
+      toast.error("Failed to process CSV file");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!open) return null;
 
   const inputClass =
@@ -135,7 +284,131 @@ export function ManagerMatchPopup({
           </button>
         </div>
 
-        {/* Form */}
+        {/* Tabs */}
+        <div className="px-6 pb-4">
+          <div className="flex rounded-lg bg-[#1e2d3d] p-1">
+            <button
+              type="button"
+              onClick={() => setActiveTab("single")}
+              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "single"
+                  ? "bg-[#0f1923] text-white"
+                  : "text-[#8899aa] hover:text-[#c8d6e5]"
+              }`}
+            >
+              Single Match
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("csv")}
+              className={`flex-1 py-2.5 px-4 rounded-md text-sm font-medium transition-colors ${
+                activeTab === "csv"
+                  ? "bg-[#22c55e] text-white"
+                  : "text-[#8899aa] hover:text-[#c8d6e5]"
+              }`}
+            >
+              Multiple Matches (CSV)
+            </button>
+          </div>
+        </div>
+
+        {/* CSV Upload Tab */}
+        {activeTab === "csv" && (
+          <div className="px-6 pb-6 space-y-5">
+            {/* CSV Format Requirements */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-[#e8eef4]">CSV Format Requirements</h3>
+                  <p className="text-xs text-[#5a6f84] mt-0.5">Your CSV file must include the following columns:</p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleDownloadSampleCSV}
+                  className="gap-1.5 text-[#22c55e] border-[#22c55e]/30 hover:bg-[#22c55e]/10 hover:text-[#22c55e] bg-transparent"
+                >
+                  <Download className="h-4 w-4" />
+                  Sample CSV
+                </Button>
+              </div>
+              
+              <div className="bg-[#1e2d3d] rounded-lg p-3 overflow-x-auto">
+                <code className="text-xs text-[#8899aa] whitespace-nowrap">
+                  {csvColumns.join(",")}
+                </code>
+              </div>
+            </div>
+
+            {/* Mock Data Example */}
+            <div className="bg-[#1a2a3a] border border-[#2a3a4e] rounded-lg p-4">
+              <div className="flex items-start gap-2.5">
+                <Info className="h-4 w-4 text-[#3b82f6] mt-0.5 shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-[#3b82f6]">Mock Data Example (Reference Only)</h4>
+                  <p className="text-xs text-[#8899aa] mt-1">
+                    Use the sample CSV above as a template. It contains mock data for reference to help you understand the format. Download it, edit with your actual match data, and upload.
+                  </p>
+                  <div className="mt-3 space-y-1">
+                    <p className="text-xs text-[#22c55e] font-medium">Example rows:</p>
+                    <p className="text-xs text-[#8899aa] font-mono">
+                      Manchester United Academy,Paid,Pro,United U18,City U18,90,Manchester,...
+                    </p>
+                    <p className="text-xs text-[#8899aa] font-mono">
+                      Barcelona FC,Paid,B2C,Barca B,Real Madrid B,90,Barcelona,...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* File Upload */}
+            <div className="space-y-2">
+              <label className={labelClass}>Upload CSV File *</label>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="csv-upload-manager"
+                />
+                <Button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="bg-[#22c55e] hover:bg-[#16a34a] text-white border-0"
+                >
+                  Choose File
+                </Button>
+                <span className="text-sm text-[#8899aa]">
+                  {csvFile ? csvFile.name : "No file chosen"}
+                </span>
+              </div>
+            </div>
+
+            {/* Upload Button */}
+            <button
+              type="button"
+              onClick={handleCSVUpload}
+              disabled={loading || !csvFile}
+              className="mt-4 w-full h-11 rounded-md bg-[#22c55e] text-white font-medium text-sm hover:bg-[#16a34a] disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Upload and Create Matches
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Single Match Form */}
+        {activeTab === "single" && (
         <form onSubmit={handleSubmit} className="px-6 pb-6">
           {/* Section: Match Details */}
           <div className="mb-5">
@@ -346,6 +619,7 @@ export function ManagerMatchPopup({
             {loading ? "Creating..." : "Create Match"}
           </button>
         </form>
+        )}
       </div>
     </div>
   );
