@@ -1,365 +1,287 @@
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
-import { Badge } from "./ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { toast } from "sonner";
-import { Download, Search, RefreshCw, Eye } from "lucide-react";
+import { RefreshCw, Shield, Check, Clock, AlertCircle } from "lucide-react";
+import { createClient } from "../../lib/supabase/client";
 import { projectId, publicAnonKey } from "/utils/supabase/info";
-import { MatchDetailsDialog } from "./MatchDetailsDialog";
 
-interface Match {
-  match_id: string;
-  status: string;
+const supabase = createClient();
+
+interface UserRole {
+  id: string;
+  email: string;
+  role: string;
+  is_active: boolean;
   created_at: string;
-  updated_at: string;
-  manager: any;
-  analyst: any;
-  reviewer: any;
 }
 
-export function AdminPortal() {
-  const [matches, setMatches] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState({
-    status: "",
-    client_type: "",
-    search: "",
-  });
-  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+interface AdminPortalProps {
+  userName: string;
+}
 
-  const fetchMatches = async () => {
-    setLoading(true);
+export function AdminPortal({ userName }: AdminPortalProps) {
+  const [users, setUsers] = useState<UserRole[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState<UserRole | null>(null);
+  const [assigningRole, setAssigningRole] = useState("");
+  const [isAssigning, setIsAssigning] = useState(false);
+
+  const roles = ["manager", "analyst", "reviewer"];
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
     try {
-      const params = new URLSearchParams();
-      if (filters.status) params.append("status", filters.status);
-      if (filters.client_type) params.append("client_type", filters.client_type);
+      setLoading(true);
+      const token = localStorage.getItem("auth_token");
 
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/matches?${params}`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/admin/users`,
         {
           headers: {
-            Authorization: `Bearer ${publicAnonKey}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      const data = await response.json();
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
 
+      const data = await response.json();
       if (data.success) {
-        let filteredMatches = data.matches;
-        
-        // Apply search filter
-        if (filters.search) {
-          const searchLower = filters.search.toLowerCase();
-          filteredMatches = filteredMatches.filter((match: Match) =>
-            match.match_id.toLowerCase().includes(searchLower) ||
-            match.manager?.organizer_name?.toLowerCase().includes(searchLower) ||
-            match.manager?.team_a?.toLowerCase().includes(searchLower) ||
-            match.manager?.team_b?.toLowerCase().includes(searchLower)
-          );
-        }
-        
-        setMatches(filteredMatches);
-      } else {
-        toast.error("Failed to fetch matches");
+        setUsers(data.users);
       }
     } catch (error) {
-      console.error("Error fetching matches:", error);
-      toast.error("Failed to fetch matches");
+      console.error("Fetch error:", error);
+      toast.error("Failed to fetch users");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchMatches();
-  }, [filters.status, filters.client_type]);
+  const handleAssignRole = async () => {
+    if (!selectedUser || !assigningRole) {
+      toast.error("Please select a role");
+      return;
+    }
 
-  const handleExport = async () => {
     try {
+      setIsAssigning(true);
+      const token = localStorage.getItem("auth_token");
+
       const response = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/matches/export/csv`,
+        `https://${projectId}.supabase.co/functions/v1/make-server-968c49f6/admin/assign-role`,
         {
+          method: "POST",
           headers: {
-            Authorization: `Bearer ${publicAnonKey}`,
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({
+            email: selectedUser.email,
+            role: assigningRole,
+          }),
         }
       );
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `matches-export-${Date.now()}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        toast.success("Export downloaded successfully!");
-      } else {
-        toast.error("Failed to export matches");
+      if (!response.ok) {
+        throw new Error("Failed to assign role");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        toast.success(`Role assigned to ${selectedUser.email}`);
+        setSelectedUser(null);
+        setAssigningRole("");
+        await fetchUsers();
       }
     } catch (error) {
-      console.error("Error exporting matches:", error);
-      toast.error("Failed to export matches");
+      console.error("Assign error:", error);
+      toast.error("Failed to assign role");
+    } finally {
+      setIsAssigning(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const styles: Record<string, string> = {
-      created: "bg-[#3b82f6]/15 text-[#60a5fa] border-[#3b82f6]/30",
-      in_review: "bg-[#f59e0b]/15 text-[#fbbf24] border-[#f59e0b]/30",
-      completed: "bg-[#22c55e]/15 text-[#4ade80] border-[#22c55e]/30",
-      rework: "bg-[#ef4444]/15 text-[#f87171] border-[#ef4444]/30",
-    };
-    return (
-      <Badge variant="outline" className={styles[status] || "border-border text-[#7a8ba6]"}>
-        {status.replace("_", " ").toUpperCase()}
-      </Badge>
-    );
-  };
-
-  const viewMatchDetails = (match: Match) => {
-    setSelectedMatch(match);
-    setDetailsOpen(true);
-  };
+  const getPendingCount = () => users.filter((u) => !u.is_active).length;
+  const getActiveCount = () => users.filter((u) => u.is_active).length;
 
   return (
-    <div className="space-y-6">
-      <Card className="bg-[#111b2e] border-border">
-        <CardHeader>
-          <CardTitle className="text-white">Admin Portal - All Matches</CardTitle>
+    <div className="space-y-8">
+      {/* Header */}
+      <div>
+        <h2 className="text-3xl font-bold text-white mb-2">Admin Panel</h2>
+        <p className="text-[#7a8ba6]">Manage user roles and permissions</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-[#111b2e] border-[#1a2742]">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-[#7a8ba6] mb-1">Total Users</p>
+                <p className="text-3xl font-bold text-white">{users.length}</p>
+              </div>
+              <Shield className="h-8 w-8 text-[#22c55e]" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#111b2e] border-[#1a2742]">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-[#7a8ba6] mb-1">Active Users</p>
+                <p className="text-3xl font-bold text-white">{getActiveCount()}</p>
+              </div>
+              <Check className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-[#111b2e] border-[#1a2742]">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-[#7a8ba6] mb-1">Pending Assignment</p>
+                <p className="text-3xl font-bold text-white">{getPendingCount()}</p>
+              </div>
+              <Clock className="h-8 w-8 text-amber-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Users List */}
+      <Card className="bg-[#111b2e] border-[#1a2742]">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+          <div>
+            <CardTitle className="text-white">Users</CardTitle>
+            <CardDescription className="text-[#7a8ba6]">
+              Manage user roles and assignments
+            </CardDescription>
+          </div>
+          <Button
+            onClick={fetchUsers}
+            disabled={loading}
+            variant="outline"
+            className="gap-2 border-[#2a3a4e] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Refresh
+          </Button>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Filters */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="search" className="text-[#c0cde0] text-xs">Search</Label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a8ba6]" />
-                <Input
-                  id="search"
-                  placeholder="Match ID, Teams, Client..."
-                  value={filters.search}
-                  onChange={(e) =>
-                    setFilters({ ...filters, search: e.target.value })
-                  }
-                  className="pl-9 bg-[#0b1120] border-border text-[#e8edf4] placeholder:text-[#4a5a76] h-9 text-sm"
-                />
-              </div>
-            </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="status" className="text-[#c0cde0] text-xs">Status Filter</Label>
-              <Select
-                value={filters.status || "all"}
-                onValueChange={(value) =>
-                  setFilters({ ...filters, status: value === "all" ? "" : value })
-                }
-              >
-                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0] h-9 text-sm">
-                  <SelectValue placeholder="All statuses" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#111b2e] border-border">
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="created">Created</SelectItem>
-                  <SelectItem value="in_review">In Review</SelectItem>
-                  <SelectItem value="completed">Completed</SelectItem>
-                  <SelectItem value="rework">Rework</SelectItem>
-                </SelectContent>
-              </Select>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <p className="text-[#7a8ba6]">Loading users...</p>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="client_type" className="text-[#c0cde0] text-xs">Client Type Filter</Label>
-              <Select
-                value={filters.client_type || "all"}
-                onValueChange={(value) =>
-                  setFilters({ ...filters, client_type: value === "all" ? "" : value })
-                }
-              >
-                <SelectTrigger className="bg-[#0b1120] border-border text-[#c0cde0] h-9 text-sm">
-                  <SelectValue placeholder="All types" />
-                </SelectTrigger>
-                <SelectContent className="bg-[#111b2e] border-border">
-                  <SelectItem value="all">All types</SelectItem>
-                  <SelectItem value="Paid">Paid</SelectItem>
-                  <SelectItem value="Unpaid">Unpaid</SelectItem>
-                  <SelectItem value="Demo">Demo</SelectItem>
-                </SelectContent>
-              </Select>
+          ) : users.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-[#7a8ba6]">No users yet</p>
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-[#c0cde0] text-xs invisible">Actions</Label>
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => { setFilters({ status: "", client_type: "", search: "" }); }}
-                  variant="outline"
-                  size="icon"
-                  className="border-[#2a3f5f] text-[#7a8ba6] hover:bg-[#1a2742] hover:text-white bg-transparent h-9 w-9 shrink-0"
+          ) : (
+            <div className="space-y-3">
+              {users.map((user) => (
+                <div
+                  key={user.id}
+                  className={`p-4 rounded-lg border transition-all ${
+                    selectedUser?.id === user.id
+                      ? "bg-[#1a2742] border-[#22c55e]/50"
+                      : "bg-[#0b1120] border-[#2a3a4e] hover:border-[#3a4a5e]"
+                  } cursor-pointer`}
+                  onClick={() => {
+                    setSelectedUser(user);
+                    setAssigningRole(user.role);
+                  }}
                 >
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={fetchMatches}
-                  variant="outline"
-                  size="icon"
-                  className="border-[#2a3f5f] text-[#7a8ba6] hover:bg-[#1a2742] hover:text-white bg-transparent h-9 w-9 shrink-0"
-                >
-                  <Search className="h-4 w-4" />
-                </Button>
-                <Button onClick={handleExport} className="flex-1 gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white border-0 h-9 text-sm">
-                  <Download className="h-4 w-4" />
-                  Export CSV
-                </Button>
-              </div>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-white">{user.email}</p>
+                      <p className="text-sm text-[#7a8ba6] mt-1">
+                        Created: {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {user.is_active ? (
+                        <div className="flex items-center gap-2 px-3 py-1 rounded bg-green-500/10 border border-green-500/30">
+                          <Check className="h-4 w-4 text-green-500" />
+                          <span className="text-sm text-green-500 capitalize font-medium">
+                            {user.role}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 px-3 py-1 rounded bg-amber-500/10 border border-amber-500/30">
+                          <AlertCircle className="h-4 w-4 text-amber-500" />
+                          <span className="text-sm text-amber-500 font-medium">Pending</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Card className="bg-[#0d1526] border-border">
-              <CardContent className="py-4 px-4">
-                <div className="text-2xl font-bold text-white">{matches.length}</div>
-                <p className="text-xs text-[#7a8ba6]">Total Matches</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-[#0d1526] border-border">
-              <CardContent className="py-4 px-4">
-                <div className="text-2xl font-bold text-[#60a5fa]">
-                  {matches.filter((m) => m.status === "created").length}
-                </div>
-                <p className="text-xs text-[#7a8ba6]">Created</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-[#0d1526] border-border">
-              <CardContent className="py-4 px-4">
-                <div className="text-2xl font-bold text-[#fbbf24]">
-                  {matches.filter((m) => m.status === "in_review").length}
-                </div>
-                <p className="text-xs text-[#7a8ba6]">In Review</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-[#0d1526] border-border">
-              <CardContent className="py-4 px-4">
-                <div className="text-2xl font-bold text-[#4ade80]">
-                  {matches.filter((m) => m.status === "completed").length}
-                </div>
-                <p className="text-xs text-[#7a8ba6]">Completed</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Table */}
-          <div className="border border-border rounded-lg overflow-x-auto">
-            {loading ? (
-              <div className="p-8 text-center text-[#7a8ba6]">
-                Loading matches...
-              </div>
-            ) : matches.length === 0 ? (
-              <div className="p-8 text-center text-[#7a8ba6]">
-                No matches found
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border bg-[#0d1526] hover:bg-[#0d1526]">
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Match ID</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Status</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Client Name</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Client Type</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Analysis Type</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Teams</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">1st Half By</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">2nd Half By</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Reviewer</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Match Status</TableHead>
-                    <TableHead className="text-[#7a8ba6] text-xs whitespace-nowrap">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {matches.map((match) => (
-                    <TableRow key={match.match_id} className="border-border hover:bg-[#1a2742]/50">
-                      <TableCell className="font-mono text-xs text-[#22c55e] whitespace-nowrap">
-                        {match.match_id.length > 20 ? match.match_id.slice(0, 20) + "..." : match.match_id}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">{getStatusBadge(match.status)}</TableCell>
-                      <TableCell className="text-[#c0cde0] text-sm whitespace-nowrap">{match.manager?.organizer_name || "-"}</TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        <Badge variant="outline" className="border-border text-[#7a8ba6] text-xs">
-                          {match.manager?.client_type || "-"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.manager?.match_analysis_type || "-"}
-                      </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.manager?.team_a} vs {match.manager?.team_b}
-                      </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.analyst?.first_half_analysed_by || 
-                         match.analyst?.analysts?.map((a: any) => a.name).join(", ") || "-"}
-                      </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.analyst?.second_half_analysed_by || "-"}
-                      </TableCell>
-                      <TableCell className="text-sm text-[#c0cde0] whitespace-nowrap">
-                        {match.reviewer?.reviewed_by || "-"}
-                      </TableCell>
-                      <TableCell className="whitespace-nowrap">
-                        {match.reviewer?.match_status ? (
-                          <Badge variant="outline" className="border-border text-[#7a8ba6] text-xs">
-                            {match.reviewer.match_status}
-                          </Badge>
-                        ) : (
-                          <span className="text-sm text-[#5a6f84]">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => viewMatchDetails(match)}
-                          className="text-[#7a8ba6] hover:text-white hover:bg-[#1a2742] h-8 w-8 p-0"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </div>
+          )}
         </CardContent>
       </Card>
 
-      {selectedMatch && (
-        <MatchDetailsDialog
-          match={selectedMatch}
-          open={detailsOpen}
-          onOpenChange={setDetailsOpen}
-        />
+      {/* Role Assignment Panel */}
+      {selectedUser && (
+        <Card className="bg-[#111b2e] border-[#22c55e]/30 ring-1 ring-[#22c55e]/10">
+          <CardHeader>
+            <CardTitle className="text-white">Assign Role</CardTitle>
+            <CardDescription className="text-[#7a8ba6]">
+              Selected: <span className="text-[#c0cde0] font-medium">{selectedUser.email}</span>
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-[#c0cde0]">Select Role</label>
+              <div className="grid grid-cols-3 gap-2">
+                {roles.map((role) => (
+                  <button
+                    key={role}
+                    onClick={() => setAssigningRole(role)}
+                    className={`p-3 rounded-lg border-2 transition-all font-medium text-sm capitalize ${
+                      assigningRole === role
+                        ? "bg-[#22c55e]/10 border-[#22c55e] text-[#22c55e]"
+                        : "bg-[#0b1120] border-[#2a3a4e] text-[#7a8ba6] hover:border-[#3a4a5e]"
+                    }`}
+                  >
+                    {role}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={handleAssignRole}
+                disabled={isAssigning || !assigningRole}
+                className="flex-1 gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:opacity-50"
+              >
+                {isAssigning ? "Assigning..." : "Confirm Assignment"}
+              </Button>
+              <Button
+                onClick={() => {
+                  setSelectedUser(null);
+                  setAssigningRole("");
+                }}
+                variant="outline"
+                className="gap-2 border-[#2a3a4e] text-[#c0cde0] hover:bg-[#1a2742] hover:text-white bg-transparent"
+              >
+                Cancel
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </div>
   );

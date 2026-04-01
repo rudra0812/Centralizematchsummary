@@ -2,7 +2,16 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import * as kv from "./kv_store.tsx";
+import { createClient } from "npm:@supabase/supabase-js";
+
 const app = new Hono();
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+
+const supabase = createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey);
 
 // Enable logger
 app.use('*', logger(console.log));
@@ -22,6 +31,296 @@ app.use(
 // Health check endpoint
 app.get("/make-server-968c49f6/health", (c) => {
   return c.json({ status: "ok" });
+});
+
+// ============= AUTH ENDPOINTS =============
+
+// Register a new user
+app.post("/auth/register", async (c) => {
+  try {
+    const { email, password } = await c.req.json();
+
+    if (!email || !password) {
+      return c.json(
+        { success: false, error: "Email and password are required" },
+        400
+      );
+    }
+
+    // Register user with Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      return c.json({ success: false, error: error.message }, 400);
+    }
+
+    // Create user_roles entry (initially inactive, waiting for admin assignment)
+    const { error: roleError } = await supabase.from("user_roles").insert({
+      email,
+      role: "pending",
+      is_active: false,
+    });
+
+    if (roleError) {
+      console.error("Error creating user role:", roleError);
+      // Don't fail registration if role creation fails
+    }
+
+    return c.json({
+      success: true,
+      message: "User registered successfully. Awaiting admin role assignment.",
+      user: data.user,
+    });
+  } catch (error) {
+    console.error("Register error:", error);
+    return c.json(
+      { success: false, error: "Registration failed" },
+      500
+    );
+  }
+});
+
+// Login user
+app.post("/auth/login", async (c) => {
+  try {
+    const { email, password } = await c.req.json();
+
+    if (!email || !password) {
+      return c.json(
+        { success: false, error: "Email and password are required" },
+        400
+      );
+    }
+
+    // Authenticate with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      return c.json({ success: false, error: error.message }, 401);
+    }
+
+    // Fetch user's assigned role
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("email", email)
+      .single();
+
+    if (roleError && roleError.code !== "PGRST116") {
+      console.error("Error fetching role:", roleError);
+    }
+
+    return c.json({
+      success: true,
+      message: "Login successful",
+      user: data.user,
+      session: data.session,
+      role: roleData?.role || null,
+      isActive: roleData?.is_active || false,
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return c.json({ success: false, error: "Login failed" }, 500);
+  }
+});
+
+// Get current user with role
+app.get("/auth/me", async (c) => {
+  try {
+    const authHeader = c.req.header("Authorization");
+    if (!authHeader) {
+      return c.json(
+        { success: false, error: "No authorization header" },
+        401
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
+    // Get user from Supabase
+    const { data, error } = await supabase.auth.getUser(token);
+
+    if (error || !data.user) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    // Fetch user's role from database
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("email", data.user.email)
+      .single();
+
+    if (roleError && roleError.code !== "PGRST116") {
+      console.error("Error fetching role:", roleError);
+    }
+
+    return c.json({
+      success: true,
+      user: data.user,
+      role: roleData?.role || null,
+      isActive: roleData?.is_active || false,
+      createdAt: roleData?.created_at || null,
+    });
+  } catch (error) {
+    console.error("Auth me error:", error);
+    return c.json({ success: false, error: "Failed to fetch user" }, 500);
+  }
+});
+
+// Logout user (token invalidation happens on client)
+app.post("/auth/logout", async (c) => {
+  try {
+    return c.json({ success: true, message: "Logout successful" });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return c.json({ success: false, error: "Logout failed" }, 500);
+  }
+});
+
+// ============= ADMIN ENDPOINTS =============
+
+// Get all users (admin only)
+app.get("/admin/users", async (c) => {
+  try {
+    const authHeader = c.req.header("Authorization");
+    if (!authHeader) {
+      return c.json(
+        { success: false, error: "No authorization header" },
+        401
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+
+    // Verify admin status
+    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user.user?.email) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    const { data: isAdmin } = await supabase
+      .from("admin_users")
+      .select("*")
+      .eq("email", user.user.email)
+      .single();
+
+    if (!isAdmin) {
+      return c.json(
+        { success: false, error: "Only admins can access this endpoint" },
+        403
+      );
+    }
+
+    // Fetch all users with roles
+    const { data: users, error: usersError } = await supabase
+      .from("user_roles")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (usersError) {
+      return c.json({ success: false, error: usersError.message }, 500);
+    }
+
+    return c.json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    console.error("Admin users error:", error);
+    return c.json(
+      { success: false, error: "Failed to fetch users" },
+      500
+    );
+  }
+});
+
+// Assign role to user (admin only)
+app.post("/admin/assign-role", async (c) => {
+  try {
+    const authHeader = c.req.header("Authorization");
+    if (!authHeader) {
+      return c.json(
+        { success: false, error: "No authorization header" },
+        401
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { email, role } = await c.req.json();
+
+    if (!email || !role) {
+      return c.json(
+        { success: false, error: "Email and role are required" },
+        400
+      );
+    }
+
+    // Verify admin status
+    const { data: user, error: userError } = await supabase.auth.getUser(token);
+    if (userError || !user.user?.email) {
+      return c.json({ success: false, error: "Unauthorized" }, 401);
+    }
+
+    const { data: isAdmin } = await supabase
+      .from("admin_users")
+      .select("*")
+      .eq("email", user.user.email)
+      .single();
+
+    if (!isAdmin) {
+      return c.json(
+        { success: false, error: "Only admins can assign roles" },
+        403
+      );
+    }
+
+    // Validate role
+    const validRoles = ["admin", "manager", "analyst", "reviewer"];
+    if (!validRoles.includes(role)) {
+      return c.json(
+        { success: false, error: `Invalid role. Must be one of: ${validRoles.join(", ")}` },
+        400
+      );
+    }
+
+    // Update user role
+    const { data: updatedRole, error: updateError } = await supabase
+      .from("user_roles")
+      .update({
+        role,
+        is_active: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("email", email)
+      .select()
+      .single();
+
+    if (updateError) {
+      return c.json(
+        { success: false, error: updateError.message },
+        500
+      );
+    }
+
+    return c.json({
+      success: true,
+      message: `Role assigned successfully`,
+      user: updatedRole,
+    });
+  } catch (error) {
+    console.error("Assign role error:", error);
+    return c.json(
+      { success: false, error: "Failed to assign role" },
+      500
+    );
+  }
 });
 
 // Helper function to generate match ID

@@ -4,78 +4,98 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { toast } from "sonner";
-import { ClipboardList, UserCheck, Shield, LogIn, Zap } from "lucide-react";
+import { LogIn, Zap, Mail, Lock, UserPlus, AlertCircle } from "lucide-react";
+import { createClient } from "../../lib/supabase/client";
 
-export type UserRole = "manager" | "analyst" | "reviewer";
+const supabase = createClient();
+
+export type UserRole = "manager" | "analyst" | "reviewer" | "admin";
 
 interface LoginPageProps {
-  onLogin: (role: UserRole, name: string) => void;
+  onLogin: (role: UserRole, email: string) => void;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [name, setName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const roles = [
-    {
-      id: "manager" as UserRole,
-      title: "Manager",
-      description: "Create matches, view dashboard, export CSV",
-      icon: ClipboardList,
-      color: "#22c55e",
-      features: [
-        "Create single/bulk matches",
-        "View all matches dashboard",
-        "Assign analysts & reviewers",
-        "Export data to CSV",
-      ],
-    },
-    {
-      id: "analyst" as UserRole,
-      title: "Analyst",
-      description: "Analyze matches and submit analysis details",
-      icon: UserCheck,
-      color: "#3b82f6",
-      features: [
-        "View assigned matches",
-        "Submit analysis details",
-        "Track analysis TAT",
-        "Add analyst remarks",
-      ],
-    },
-    {
-      id: "reviewer" as UserRole,
-      title: "Reviewer",
-      description: "Review analysis and complete QC checks",
-      icon: Shield,
-      color: "#f59e0b",
-      features: [
-        "Review submitted analyses",
-        "Track QC errors",
-        "Send back for rework",
-        "Complete match review",
-      ],
-    },
-  ];
-
-  const handleLogin = () => {
-    if (!selectedRole) {
-      toast.error("Please select a role");
-      return;
-    }
-    if (!name.trim()) {
-      toast.error("Please enter your name");
-      return;
-    }
-
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
     setLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      toast.success(`Welcome, ${name}!`);
-      onLogin(selectedRole, name.trim());
+
+    try {
+      if (!email || !password) {
+        throw new Error("Please fill in all fields");
+      }
+
+      if (isSignUp) {
+        // Sign up
+        if (password !== confirmPassword) {
+          throw new Error("Passwords do not match");
+        }
+        if (password.length < 6) {
+          throw new Error("Password must be at least 6 characters");
+        }
+
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+
+        if (signUpError) throw signUpError;
+
+        toast.success("Account created! Awaiting admin role assignment.");
+        setEmail("");
+        setPassword("");
+        setConfirmPassword("");
+        setIsSignUp(false);
+      } else {
+        // Sign in
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (signInError) throw signInError;
+
+        // Store session
+        localStorage.setItem("auth_token", data.session?.access_token || "");
+
+        // Fetch user role
+        const { data: roleData, error: roleError } = await supabase
+          .from("user_roles")
+          .select("*")
+          .eq("email", email)
+          .single();
+
+        if (roleError && roleError.code !== "PGRST116") {
+          console.error("Role fetch error:", roleError);
+        }
+
+        const userRole = roleData?.role || "pending";
+        const isActive = roleData?.is_active || false;
+
+        if (!isActive && userRole !== "admin") {
+          toast.warning("Your account is pending admin approval. Please check back later.");
+          setLoading(false);
+          return;
+        }
+
+        toast.success(`Welcome, ${email}!`);
+        onLogin(userRole as UserRole, email);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Authentication failed";
+      setError(message);
+      toast.error(message);
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
@@ -97,97 +117,126 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-4xl space-y-8">
-          {/* Welcome Section */}
-          <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-white">Welcome Back</h2>
-            <p className="text-[#7a8ba6]">Select your role to access the Match Manager portal</p>
-          </div>
+        <Card className="bg-[#111b2e] border-[#1a2742] w-full max-w-md">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-2xl text-white">
+              {isSignUp ? "Create Account" : "Welcome Back"}
+            </CardTitle>
+            <CardDescription className="text-[#7a8ba6] mt-2">
+              {isSignUp
+                ? "Sign up to get started with Match Manager"
+                : "Sign in to your account to continue"}
+            </CardDescription>
+          </CardHeader>
 
-          {/* Role Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {roles.map((role) => {
-              const Icon = role.icon;
-              const isSelected = selectedRole === role.id;
-              return (
-                <Card
-                  key={role.id}
-                  onClick={() => setSelectedRole(role.id)}
-                  className={`cursor-pointer transition-all bg-[#111b2e] border-2 hover:border-[${role.color}]/50 ${
-                    isSelected
-                      ? `border-[${role.color}] ring-1 ring-[${role.color}]/30`
-                      : "border-[#1a2742]"
-                  }`}
-                  style={{
-                    borderColor: isSelected ? role.color : undefined,
-                    boxShadow: isSelected ? `0 0 20px ${role.color}20` : undefined,
-                  }}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="p-3 rounded-lg"
-                        style={{ backgroundColor: `${role.color}15`, border: `1px solid ${role.color}30` }}
-                      >
-                        <Icon className="h-6 w-6" style={{ color: role.color }} />
-                      </div>
-                      <div>
-                        <CardTitle className="text-white text-lg">{role.title}</CardTitle>
-                        <CardDescription className="text-[#7a8ba6] text-sm">{role.description}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <ul className="space-y-1.5">
-                      {role.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center gap-2 text-sm text-[#8899aa]">
-                          <div
-                            className="h-1.5 w-1.5 rounded-full"
-                            style={{ backgroundColor: role.color }}
-                          />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-
-          {/* Login Form */}
-          <Card className="bg-[#111b2e] border-[#1a2742] max-w-md mx-auto">
-            <CardHeader>
-              <CardTitle className="text-white text-lg">Enter Your Details</CardTitle>
-              <CardDescription className="text-[#7a8ba6]">
-                {selectedRole
-                  ? `Logging in as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`
-                  : "Select a role above to continue"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name" className="text-[#c0cde0]">Your Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Enter your name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="bg-[#0b1120] border-[#2a3a4e] text-[#e8edf4] placeholder:text-[#4a5a76]"
-                  onKeyDown={(e) => e.key === "Enter" && handleLogin()}
-                />
+          <CardContent>
+            {error && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
+                <span className="text-sm text-red-300">{error}</span>
               </div>
+            )}
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-[#c0cde0]">Email Address</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a8ba6]" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setError("");
+                    }}
+                    className="bg-[#0b1120] border-[#2a3a4e] text-[#e8edf4] placeholder:text-[#4a5a76] pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-[#c0cde0]">Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a8ba6]" />
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      setError("");
+                    }}
+                    className="bg-[#0b1120] border-[#2a3a4e] text-[#e8edf4] placeholder:text-[#4a5a76] pl-10"
+                  />
+                </div>
+              </div>
+
+              {isSignUp && (
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-[#c0cde0]">Confirm Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#7a8ba6]" />
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        setError("");
+                      }}
+                      className="bg-[#0b1120] border-[#2a3a4e] text-[#e8edf4] placeholder:text-[#4a5a76] pl-10"
+                    />
+                  </div>
+                </div>
+              )}
+
               <Button
-                onClick={handleLogin}
-                disabled={!selectedRole || !name.trim() || loading}
-                className="w-full gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:opacity-50"
+                type="submit"
+                disabled={loading}
+                className="w-full gap-2 bg-[#22c55e] hover:bg-[#16a34a] text-white disabled:opacity-50 mt-6"
               >
-                <LogIn className="h-4 w-4" />
-                {loading ? "Signing in..." : "Sign In"}
+                {isSignUp ? (
+                  <>
+                    <UserPlus className="h-4 w-4" />
+                    {loading ? "Creating account..." : "Create Account"}
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="h-4 w-4" />
+                    {loading ? "Signing in..." : "Sign In"}
+                  </>
+                )}
               </Button>
-            </CardContent>
-          </Card>
-        </div>
+            </form>
+
+            <div className="mt-6 text-center">
+              <p className="text-[#7a8ba6] text-sm">
+                {isSignUp ? "Already have an account?" : "Don&apos;t have an account?"}
+                {" "}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsSignUp(!isSignUp);
+                    setError("");
+                  }}
+                  className="text-[#22c55e] hover:text-[#16a34a] font-medium transition-colors"
+                >
+                  {isSignUp ? "Sign In" : "Sign Up"}
+                </button>
+              </p>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-[#2a3a4e]">
+              <p className="text-xs text-[#5a6f84] text-center">
+                After sign up, an administrator will assign your role. Please wait for confirmation.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </main>
 
       {/* Footer */}
